@@ -7,6 +7,8 @@ import com.tachibana.projectsekai05.common.utils.JwtUtil;
 import com.tachibana.projectsekai05.common.utils.PasswordUtil;
 import com.tachibana.projectsekai05.dto.LoginDTO;
 import com.tachibana.projectsekai05.dto.LoginVO;
+import com.tachibana.projectsekai05.dto.RegisterDTO;
+import com.tachibana.projectsekai05.dto.UserInfoVO;
 import com.tachibana.projectsekai05.dto.UserVO;
 import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
@@ -44,5 +46,17 @@ public class AuthServiceImpl implements AuthService {
         vo.setToken(token);
         vo.setUser(UserVO.from(user));
         return vo;
+    }
+
+    // ===== 以下接口待实现（实现阶段补齐注册/当前用户逻辑）=====
+
+    @Override
+    public UserInfoVO register(RegisterDTO registerDTO) {
+        throw new UnsupportedOperationException("接口待实现");
+    }
+
+    @Override
+    public UserInfoVO me() {
+        throw new UnsupportedOperationException("接口待实现");
     }
 }

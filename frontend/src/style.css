@@ -1,0 +1,139 @@
+/* ================= 全局主题 ================= */
+:root {
+  --primary: #2aa3ff;
+  --primary-dark: #1b7fd4;
+  --accent: #ff18fb;
+  --bg: #f5f7fb;
+  --text: #2c3e50;
+  --text-light: #8a94a6;
+  --border: #e4e9f0;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 20px rgba(42, 163, 255, 0.08);
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text);
+  background:
+    linear-gradient(120deg, rgba(42, 163, 255, 0.06), rgba(255, 24, 251, 0.05)),
+    var(--bg);
+  background-attachment: fixed;
+  min-height: 100%;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  border-left: 5px solid var(--primary);
+  padding-left: 12px;
+  margin: 8px 0 20px;
+  color: var(--text);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+/* 多行文本保留换行 */
+.rich-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.9;
+  font-size: 15px;
+  color: #444;
+}
+
+/* 搜索高亮 */
+.highlight {
+  color: #e5484d;
+  font-weight: 700;
+  background: rgba(255, 209, 0, 0.25);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* 状态标签颜色 */
+.status-pending {
+  color: #b8860b;
+}
+.status-published {
+  color: #16a34a;
+}
+.status-rejected {
+  color: #dc2626;
+}
+
+.text-muted {
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+/* Element Plus 圆角统一 */
+.el-button {
+  border-radius: 8px;
+}
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: 8px;
+}
+
+/* 动画卡片 hover 效果 */
+.anime-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+.anime-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(42, 163, 255, 0.18);
+}

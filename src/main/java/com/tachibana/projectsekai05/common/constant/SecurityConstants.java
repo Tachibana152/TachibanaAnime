@@ -20,6 +20,9 @@ public final class SecurityConstants {
     /** 普通用户角色 */
     public static final String ROLE_USER = "USER";
 
+    /** 超级管理员角色 */
+    public static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
+
     /** 需要认证的路径前缀 */
     public static final String AUTH_PATH_PREFIX = "/api/**";
 
