@@ -55,6 +55,48 @@ public class AnimeVO implements Serializable {
     @Schema(description = "内容")
     private String content;
 
+    @Schema(description = "分镜")
+    private String storyboard;
+
+    @Schema(description = "演出")
+    private String performance;
+
+    @Schema(description = "音乐")
+    private String music;
+
+    @Schema(description = "人物原案")
+    private String charaOriginal;
+
+    @Schema(description = "人物设定")
+    private String charaDesign;
+
+    @Schema(description = "系列构成")
+    private String seriesComposition;
+
+    @Schema(description = "美术监督")
+    private String artDirector;
+
+    @Schema(description = "色彩设计")
+    private String colorDesign;
+
+    @Schema(description = "总作画监督")
+    private String chiefAnimationDirector;
+
+    @Schema(description = "作画监督")
+    private String animationDirector;
+
+    @Schema(description = "摄影监督")
+    private String photographyDirector;
+
+    @Schema(description = "企画")
+    private String planning;
+
+    @Schema(description = "别名")
+    private String alias;
+
+    @Schema(description = "语录")
+    private String quote;
+
     @Schema(description = "浏览量")
     private Long viewCount;
 

@@ -30,7 +30,7 @@ function delay(ms = 150) {
 function animeMatch(a, keyword) {
   if (!keyword) return true
   const k = keyword.toLowerCase()
-  const haystack = [a.title, a.titleJp, a.original, a.director, a.writer, a.production, a.synopsis, a.content]
+  const haystack = [a.title, a.titleJp, a.original, a.director, a.writer, a.production, a.synopsis, a.content, a.alias]
     .filter(Boolean)
     .join(' ')
     .toLowerCase()

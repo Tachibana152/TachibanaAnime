@@ -97,7 +97,7 @@ Authorization: Bearer <token>
 
 查询参数：`pageNum`、`pageSize`、`category`（NEW/CLASSIC，可空）、`keyword`（可空）
 
-> `keyword` 搜索范围：标题、日文名、原作、导演、脚本、制作公司、简介、内容（多字段模糊匹配）。
+> `keyword` 搜索范围：标题、日文名、原作、导演、脚本、制作公司、简介、内容、别名（多字段模糊匹配）。
 
 响应：`data` 为 `PageResult<AnimeVO>`。
 

@@ -108,6 +108,60 @@
         <el-form-item label="制作公司">
           <el-input v-model="form.production" />
         </el-form-item>
+        <div class="form-row">
+          <el-form-item label="分镜">
+            <el-input v-model="form.storyboard" />
+          </el-form-item>
+          <el-form-item label="演出">
+            <el-input v-model="form.performance" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="音乐">
+            <el-input v-model="form.music" />
+          </el-form-item>
+          <el-form-item label="人物原案">
+            <el-input v-model="form.charaOriginal" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="人物设定">
+            <el-input v-model="form.charaDesign" />
+          </el-form-item>
+          <el-form-item label="系列构成">
+            <el-input v-model="form.seriesComposition" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="美术监督">
+            <el-input v-model="form.artDirector" />
+          </el-form-item>
+          <el-form-item label="色彩设计">
+            <el-input v-model="form.colorDesign" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="总作画监督">
+            <el-input v-model="form.chiefAnimationDirector" />
+          </el-form-item>
+          <el-form-item label="摄影监督">
+            <el-input v-model="form.photographyDirector" />
+          </el-form-item>
+        </div>
+        <el-form-item label="作画监督">
+          <el-input v-model="form.animationDirector" />
+        </el-form-item>
+        <div class="form-row">
+          <el-form-item label="企画">
+            <el-input v-model="form.planning" />
+          </el-form-item>
+          <el-form-item label="别名">
+            <el-input v-model="form.alias" />
+          </el-form-item>
+        </div>
+        <el-form-item label="语录">
+          <el-input v-model="form.quote" placeholder="详情页语录装饰，选填" />
+        </el-form-item>
         <el-form-item label="简介">
           <el-input v-model="form.synopsis" type="textarea" :rows="3" />
         </el-form-item>
@@ -141,6 +195,9 @@ const query = reactive({ category: '', keyword: '' })
 const emptyForm = () => ({
   id: null, title: '', titleJp: '', category: 'NEW', cover: '',
   original: '', director: '', writer: '', episodes: 1, airDate: '', airWeekday: '', production: '',
+  storyboard: '', performance: '', music: '', charaOriginal: '', charaDesign: '',
+  seriesComposition: '', artDirector: '', colorDesign: '', chiefAnimationDirector: '',
+  animationDirector: '', photographyDirector: '', planning: '', alias: '', quote: '',
   synopsis: '', content: '',
 })
 const form = reactive(emptyForm())

@@ -17,6 +17,9 @@ public class UserVO {
 
     private String nickname;
 
+    /** 角色: USER / ADMIN / SUPER_ADMIN */
+    private String role;
+
     private Integer status;
 
     private LocalDateTime createTime;
@@ -26,6 +29,7 @@ public class UserVO {
         vo.setId(user.getId());
         vo.setUsername(user.getUsername());
         vo.setNickname(user.getNickname());
+        vo.setRole(user.getRole());
         vo.setStatus(user.getStatus());
         vo.setCreateTime(user.getCreateTime());
         return vo;

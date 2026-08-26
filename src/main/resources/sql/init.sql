@@ -57,6 +57,20 @@ CREATE TABLE anime
     production  VARCHAR(100)          DEFAULT NULL COMMENT '制作公司',
     synopsis    TEXT COMMENT '简介',
     content     TEXT COMMENT '内容/分集介绍(支持换行)',
+    storyboard  VARCHAR(500)          DEFAULT NULL COMMENT '分镜',
+    performance VARCHAR(500)          DEFAULT NULL COMMENT '演出',
+    music       VARCHAR(255)          DEFAULT NULL COMMENT '音乐',
+    chara_original VARCHAR(255)       DEFAULT NULL COMMENT '人物原案',
+    chara_design   VARCHAR(255)       DEFAULT NULL COMMENT '人物设定',
+    series_composition VARCHAR(255)   DEFAULT NULL COMMENT '系列构成',
+    art_director     VARCHAR(255)     DEFAULT NULL COMMENT '美术监督',
+    color_design     VARCHAR(255)     DEFAULT NULL COMMENT '色彩设计',
+    chief_animation_director VARCHAR(255) DEFAULT NULL COMMENT '总作画监督',
+    animation_director VARCHAR(500)   DEFAULT NULL COMMENT '作画监督',
+    photography_director VARCHAR(255) DEFAULT NULL COMMENT '摄影监督',
+    planning          VARCHAR(255)    DEFAULT NULL COMMENT '企画',
+    alias             VARCHAR(255)    DEFAULT NULL COMMENT '别名',
+    quote             VARCHAR(500)    DEFAULT NULL COMMENT '语录',
     view_count  BIGINT       NOT NULL DEFAULT 0 COMMENT '浏览量',
     sort        INT          NOT NULL DEFAULT 0 COMMENT '列表排序(小在前)',
     deleted     TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0未删 1已删',
@@ -149,6 +163,24 @@ VALUES (1, '葬送的芙莉莲Ⅱ', '葬送のフリーレン 第2期', 'NEW', '
         '温柔少女鹿目圆在神秘的转学生晓美焰与可爱生物丘比的影响下，即将成为魔法少女。然而，成为魔法少女的代价，远比想象中残酷。',
         '被誉为"魔法少女的成人礼"的颠覆性名作，虚渊玄剧本 × 新房昭之演出 × 梶浦由记音乐，第3话开始剧情急转直下。',
         8900, 12, '2026-01-01 00:00:00');
+
+-- CLANNAD 补充制作阵容与语录（源自素材页 CLANNAD.html）
+UPDATE anime
+SET storyboard    = '石原立也(1,4,8)、石立太一(2,8,14)、坂本一也(3,15,17,20)、荒谷朋恵(5,11)、高雄統子(6,12,18)、北之原孝將(7,13,19)、三好一郎 [ 木上益治 ](9)、武本康弘(10,16,22)、米田光良(21)、山田尚子(23)',
+    performance   = '石原立也(1,4)、北之原孝將(2,7,13,19)、三好一郎 [ 木上益治 ](3,9)、荒谷朋恵(5,11)、高雄統子(6,12,18)、石立太一(8,14,20)、武本康弘(10,16,22)、米田光良(15,21)、山田尚子(17,23)',
+    music         = '折戸伸治、戸越まごめ、麻枝准',
+    chara_original = '樋上いたる',
+    chara_design  = '池田和美',
+    series_composition = '志茂文彦',
+    art_director  = '篠原睦雄',
+    color_design  = '竹田明代',
+    chief_animation_director = '池田和美',
+    animation_director = '池田和美、高橋博行、植野千世子、西屋太志、高橋真梨子、池田晶子、堀口悠紀子、秋竹斉一、坂本一也',
+    photography_director = '中上竜太',
+    planning      = '馬場隆博、中嶋嘉美',
+    alias         = 'クラナド、团子大家族',
+    quote         = '如果您愿意的话，让我带您去吧，这座小镇，愿望实现的地方……'
+WHERE id = 11;
 
 -- =============================================================
 -- 3. 论坛帖子表 forum_post

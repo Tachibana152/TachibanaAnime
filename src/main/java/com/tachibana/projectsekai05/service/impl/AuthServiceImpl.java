@@ -15,6 +15,7 @@ import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.service.AuthService;
 import jakarta.annotation.Resource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,8 +30,6 @@ public class AuthServiceImpl implements AuthService {
     private final SysUserMapper sysUserMapper;
     private final JwtUtil jwtUtil;
 
-    @Resource
-    private AuthServiceImpl authServiceImpl;
 
     public AuthServiceImpl(SysUserMapper sysUserMapper, JwtUtil jwtUtil) {
         this.sysUserMapper = sysUserMapper;
@@ -48,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(400, "账号已被禁用");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), SecurityConstants.ROLE_USER);
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
 
         LoginVO vo = new LoginVO();
         vo.setToken(token);
@@ -67,7 +66,8 @@ public class AuthServiceImpl implements AuthService {
         if(username==null||password==null||nickname==null){
             throw new BusinessException(400, "用户名、密码和昵称不能为空");
         }
-        if(sysUserMapper.selectById(username)!=null){
+        if (sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, username)) > 0) {
             throw new BusinessException(400, "用户名已存在");
         }
         if(username.length()>16){
@@ -89,6 +89,20 @@ public class AuthServiceImpl implements AuthService {
         vo.setNickname(nickname);
         vo.setStatus(status);
         vo.setRole(role);
+        SysUser user = new SysUser();
+        user.setUsername(username);
+        user.setPassword(PasswordUtil.encode(password));
+        user.setNickname(nickname);
+        user.setRole(role);
+        user.setStatus(status);
+        user.setDeleted(0);
+        user.setCreateTime(now);
+        user.setUpdateTime(now);
+        try {
+            sysUserMapper.insert(user);
+        } catch (DuplicateKeyException e) {
+            throw new BusinessException(400, "用户名已存在");
+        }
         return vo;
     }
 

@@ -18,6 +18,9 @@ public class SysUser extends BaseEntity {
 
     private String nickname;
 
+    /** 角色：USER / ADMIN / SUPER_ADMIN */
+    private String role;
+
     /** 状态：1 正常，0 禁用 */
     private Integer status;
 }

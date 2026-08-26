@@ -4,40 +4,58 @@
       <div class="crumb">
         <el-button link @click="router.push('/home')"><el-icon><Back /></el-icon> 返回首页</el-button>
       </div>
-      <div class="detail card">
-        <div class="left">
-          <div class="poster-wrap">
-            <el-image :src="anime.cover" fit="cover" class="poster">
-              <template #error><div class="poster-error">暂无封面</div></template>
+      <div class="detail-card">
+        <p class="page-title">{{ anime.title }}<span v-if="anime.titleJp" class="title-jp"> - {{ anime.titleJp }}</span></p>
+        <p class="view-stats text-muted"><el-icon><View /></el-icon> {{ anime.viewCount }} 次浏览</p>
+        <div class="twotop"></div>
+
+        <div class="detail-body">
+          <!-- 左栏：封面 + 信息列表 -->
+          <div class="theleftlist">
+            <el-image :src="anime.cover" fit="cover" class="cover">
+              <template #error><div class="cover-error">暂无封面</div></template>
             </el-image>
-            <el-tag :type="anime.category === 'NEW' ? 'danger' : 'warning'" size="small" effect="dark" class="cat">
-              {{ anime.category === 'NEW' ? '一月新番' : '经典动画' }}
-            </el-tag>
-          </div>
-          <ul class="meta-list">
-            <li><span class="k">中文名</span><span class="v" v-html="hl(anime.title)"></span></li>
-            <li v-if="anime.titleJp"><span class="k">日文名</span><span class="v" v-html="hl(anime.titleJp)"></span></li>
-            <li><span class="k">话数</span><span class="v">{{ anime.episodes }}</span></li>
-            <li><span class="k">放送开始</span><span class="v">{{ anime.airDate }}</span></li>
-            <li v-if="anime.airWeekday"><span class="k">放送星期</span><span class="v">{{ anime.airWeekday }}</span></li>
-            <li v-if="anime.original"><span class="k">原作</span><span class="v" v-html="hl(anime.original)"></span></li>
-            <li v-if="anime.director"><span class="k">导演</span><span class="v" v-html="hl(anime.director)"></span></li>
-            <li v-if="anime.writer"><span class="k">脚本</span><span class="v" v-html="hl(anime.writer)"></span></li>
-            <li v-if="anime.production"><span class="k">制作</span><span class="v" v-html="hl(anime.production)"></span></li>
-          </ul>
-        </div>
-        <div class="right">
-          <h1 class="title" v-html="hl(anime.title)"></h1>
-          <p class="sub" v-if="anime.titleJp" v-html="hl(anime.titleJp)"></p>
-          <div class="stats text-muted">
-            <el-icon><View /></el-icon> {{ anime.viewCount }} 次浏览
+            <ul class="meta-list">
+              <li><span class="list">中文名:</span><span class="name" v-html="hl(anime.title)"></span></li>
+              <li v-if="anime.titleJp"><span class="list">日文名:</span><span class="name" v-html="hl(anime.titleJp)"></span></li>
+              <li v-if="anime.episodes"><span class="list">话数:</span><span class="name">{{ anime.episodes }}</span></li>
+              <li v-if="anime.airDate"><span class="list">放送开始:</span><span class="name">{{ anime.airDate }}</span></li>
+              <li v-if="anime.airWeekday"><span class="list">放送星期:</span><span class="name">{{ anime.airWeekday }}</span></li>
+              <li v-if="anime.original"><span class="list">原作:</span><span class="name" v-html="hl(anime.original)"></span></li>
+              <li v-if="anime.director"><span class="list">导演:</span><span class="name" v-html="hl(anime.director)"></span></li>
+              <li v-if="anime.writer"><span class="list">脚本:</span><span class="name" v-html="hl(anime.writer)"></span></li>
+              <li v-if="anime.storyboard"><span class="list">分镜:</span><span class="name">{{ anime.storyboard }}</span></li>
+              <li v-if="anime.performance"><span class="list">演出:</span><span class="name">{{ anime.performance }}</span></li>
+              <li v-if="anime.music"><span class="list">音乐:</span><span class="name">{{ anime.music }}</span></li>
+              <li v-if="anime.charaOriginal"><span class="list">人物原案:</span><span class="name">{{ anime.charaOriginal }}</span></li>
+              <li v-if="anime.charaDesign"><span class="list">人物设定:</span><span class="name">{{ anime.charaDesign }}</span></li>
+              <li v-if="anime.seriesComposition"><span class="list">系列构成:</span><span class="name">{{ anime.seriesComposition }}</span></li>
+              <li v-if="anime.artDirector"><span class="list">美术监督:</span><span class="name">{{ anime.artDirector }}</span></li>
+              <li v-if="anime.colorDesign"><span class="list">色彩设计:</span><span class="name">{{ anime.colorDesign }}</span></li>
+              <li v-if="anime.chiefAnimationDirector"><span class="list">总作画监督:</span><span class="name">{{ anime.chiefAnimationDirector }}</span></li>
+              <li v-if="anime.animationDirector"><span class="list">作画监督:</span><span class="name">{{ anime.animationDirector }}</span></li>
+              <li v-if="anime.photographyDirector"><span class="list">摄影监督:</span><span class="name">{{ anime.photographyDirector }}</span></li>
+              <li v-if="anime.planning"><span class="list">企画:</span><span class="name">{{ anime.planning }}</span></li>
+              <li v-if="anime.production"><span class="list">动画制作:</span><span class="name" v-html="hl(anime.production)"></span></li>
+              <li v-if="anime.alias"><span class="list">别名:</span><span class="name">{{ anime.alias }}</span></li>
+            </ul>
           </div>
 
-          <h2 class="section">简介</h2>
-          <p class="rich-text synopsis" v-html="hl(anime.synopsis)"></p>
+          <!-- 右栏：简介 / 语录 / 内容 -->
+          <div class="themidlist">
+            <div class="section-title">简介</div>
+            <div class="content1 rich-text" v-html="hl(anime.synopsis)"></div>
 
-          <h2 class="section">内容</h2>
-          <div class="rich-text content" v-html="hl(anime.content)"></div>
+            <div class="quote-box" v-if="anime.quote">
+              <span class="qmark qmark-l">"</span>
+              <span class="qmark qmark-r">"</span>
+              <div class="quote-title">{{ anime.title }}</div>
+              <p class="quote-line">{{ anime.quote }}</p>
+            </div>
+
+            <div class="section-title">内容</div>
+            <div class="content2 rich-text" v-html="hl(anime.content)"></div>
+          </div>
         </div>
       </div>
     </template>
@@ -80,91 +98,137 @@ onMounted(load)
 .crumb {
   margin-bottom: 12px;
 }
-.detail {
-  display: flex;
-  gap: 28px;
-  padding: 28px;
+.detail-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  border: 2px solid rgb(221, 221, 221);
+  background-color: rgba(244, 240, 240, 0.92);
+  border-radius: 10px;
+  overflow: hidden;
 }
-.left {
+.page-title {
+  margin: 0;
+  padding: 24px 28px 0;
+  font-size: 25px;
+  font-weight: 600;
+}
+.title-jp {
+  font-weight: 400;
+  color: var(--text-light);
+}
+.view-stats {
+  margin: 6px 28px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+.twotop {
+  margin-top: 14px;
+  border-bottom: 1px solid rgb(173, 173, 173);
+  height: 50px;
+  background-color: rgba(208, 204, 204, 0.5);
+}
+.detail-body {
+  display: flex;
+  gap: 30px;
+  padding: 0 28px 28px;
+}
+.theleftlist {
   width: 280px;
   flex-shrink: 0;
 }
-.poster-wrap {
-  position: relative;
-}
-.poster {
+.cover {
   width: 280px;
   height: 380px;
-  border-radius: 10px;
-  box-shadow: var(--shadow);
+  border: 1px solid rgb(0, 0, 0);
+  border-radius: 8px;
+  display: block;
 }
-.poster-error {
+.cover-error {
   width: 280px;
   height: 380px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-light);
-  background: #f0f2f5;
-}
-.cat {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  background: #e9e9e9;
+  border-radius: 8px;
 }
 .meta-list {
   list-style: none;
-  margin: 14px 0 0;
+  margin: 20px 0 0;
   padding: 0;
 }
 .meta-list li {
-  display: flex;
-  padding: 7px 0;
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px solid rgb(192, 187, 187);
+  padding: 7px;
   font-size: 14px;
-  line-height: 1.6;
+  margin-top: 12px;
+  line-height: 1.7;
+  color: rgb(109, 104, 104);
 }
-.k {
-  width: 76px;
-  flex-shrink: 0;
+.meta-list .list {
   color: var(--text-light);
+  margin-right: 6px;
 }
-.v {
-  flex: 1;
-  color: var(--text);
+.meta-list .name {
+  color: rgb(0, 0, 0);
 }
-.right {
+.themidlist {
   flex: 1;
   min-width: 0;
 }
-.title {
-  margin: 0 0 4px;
-  font-size: 26px;
-  font-weight: 700;
-}
-.sub {
-  margin: 0 0 8px;
-  color: var(--text-light);
-  font-size: 15px;
-}
-.stats {
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.section {
-  font-size: 18px;
-  border-left: 5px solid var(--primary);
+.section-title {
+  font-size: 25px;
+  border-left: 5px solid rgb(4, 137, 19);
   padding-left: 10px;
-  margin: 22px 0 12px;
+  margin-top: 26px;
 }
-.synopsis {
-  background: #f8faff;
-  padding: 16px 18px;
-  border-radius: 10px;
+.content1 {
+  font-size: 15px;
+  margin-top: 14px;
+  line-height: 26px;
+  color: rgb(63, 61, 61);
+  padding: 10px;
+  border-bottom: 1px solid rgb(192, 187, 187);
 }
-.content {
-  color: #555;
+.content2 {
+  font-size: 15px;
+  margin-top: 14px;
+  line-height: 30px;
+  color: rgb(63, 61, 61);
+  padding: 10px;
+  border-bottom: 1px solid rgb(192, 187, 187);
+}
+.quote-box {
+  position: relative;
+  margin: 34px 0 10px;
+  padding: 6px 40px 16px 60px;
+  font-style: italic;
+}
+.qmark {
+  position: absolute;
+  font-size: 80px;
+  line-height: 1;
+  color: rgba(7, 19, 245, 0.3);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.qmark-l {
+  top: -6px;
+  left: 8px;
+}
+.qmark-r {
+  top: -6px;
+  right: 8px;
+}
+.quote-title {
+  font-size: 22px;
+  color: rgba(0, 0, 0, 0.8);
+}
+.quote-line {
+  margin: 12px 0 0;
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.8);
 }
 </style>
