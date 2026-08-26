@@ -7,4 +7,5 @@ import com.tachibana.projectsekai05.entity.SysUser;
  * 系统用户 Mapper
  */
 public interface SysUserMapper extends BaseMapper<SysUser> {
+
 }

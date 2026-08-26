@@ -17,6 +17,9 @@
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" :prefix-icon="Lock" />
         </el-form-item>
+        <el-form-item v-if="mode === 'register'" label="确认密码" prop="confirmPassword">
+          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="请再次输入密码" :prefix-icon="Lock" />
+        </el-form-item>
         <el-form-item v-if="mode === 'register'" label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称（选填）" :prefix-icon="Avatar" />
         </el-form-item>
@@ -31,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Avatar } from '@element-plus/icons-vue'
@@ -43,12 +46,26 @@ const store = useUserStore()
 const formRef = ref(null)
 const mode = ref('login')
 const loading = ref(false)
-const form = reactive({ username: '', password: '', nickname: '' })
+const form = reactive({ username: '', password: '', confirmPassword: '', nickname: '' })
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  confirmPassword: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== form.password) callback(new Error('两次输入的密码不一致'))
+        else callback()
+      },
+      trigger: 'blur',
+    },
+  ],
 }
+
+watch(mode, () => {
+  form.confirmPassword = ''
+})
 
 async function submit() {
   await formRef.value.validate()

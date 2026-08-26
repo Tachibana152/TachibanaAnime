@@ -5,6 +5,7 @@ import com.tachibana.projectsekai05.common.constant.SecurityConstants;
 import com.tachibana.projectsekai05.common.exception.BusinessException;
 import com.tachibana.projectsekai05.common.utils.JwtUtil;
 import com.tachibana.projectsekai05.common.utils.PasswordUtil;
+import com.tachibana.projectsekai05.common.utils.PasswordValidator;
 import com.tachibana.projectsekai05.dto.LoginDTO;
 import com.tachibana.projectsekai05.dto.LoginVO;
 import com.tachibana.projectsekai05.dto.RegisterDTO;
@@ -13,7 +14,11 @@ import com.tachibana.projectsekai05.dto.UserVO;
 import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.service.AuthService;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
 
 /**
  * 认证服务实现
@@ -23,6 +28,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final SysUserMapper sysUserMapper;
     private final JwtUtil jwtUtil;
+
+    @Resource
+    private AuthServiceImpl authServiceImpl;
 
     public AuthServiceImpl(SysUserMapper sysUserMapper, JwtUtil jwtUtil) {
         this.sysUserMapper = sysUserMapper;
@@ -52,7 +60,36 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserInfoVO register(RegisterDTO registerDTO) {
-        throw new UnsupportedOperationException("接口待实现");
+    UserInfoVO vo = new UserInfoVO();
+        String username = registerDTO.getUsername();
+        String password = registerDTO.getPassword();
+        String nickname = registerDTO.getNickname();
+        if(username==null||password==null||nickname==null){
+            throw new BusinessException(400, "用户名、密码和昵称不能为空");
+        }
+        if(sysUserMapper.selectById(username)!=null){
+            throw new BusinessException(400, "用户名已存在");
+        }
+        if(username.length()>16){
+            throw new BusinessException(400, "用户名长度不得超过15个字符");
+        }
+        if(nickname.length()>16){
+            throw new BusinessException(400, "昵称长度不得超过15个字符");
+        }
+        boolean characterAndNumber = PasswordValidator.isCharacterAndNumber(password);
+        if(!characterAndNumber){
+            throw new BusinessException(400, "密码必须由字母和数字组成，并且长度大于等于8个字符");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String role = "USER";
+        Integer status = 1;
+        vo.setUsername(username);
+        vo.setCreateTime(now);
+        vo.setNickname(nickname);
+        vo.setStatus(status);
+        vo.setRole(role);
+        return vo;
     }
 
     @Override
