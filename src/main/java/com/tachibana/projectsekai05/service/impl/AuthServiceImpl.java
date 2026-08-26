@@ -13,6 +13,7 @@ import com.tachibana.projectsekai05.dto.UserInfoVO;
 import com.tachibana.projectsekai05.dto.UserVO;
 import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
+import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.AuthService;
 import jakarta.annotation.Resource;
 import org.springframework.dao.DuplicateKeyException;
@@ -108,6 +109,24 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserInfoVO me() {
-        throw new UnsupportedOperationException("接口待实现");
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
     }
-}
+        SysUser sysUser = sysUserMapper.selectById(userId);
+        if (sysUser == null) {
+        throw new BusinessException(401, "未登录");
+        }
+        if (sysUser.getStatus() != null && sysUser.getStatus() == 0) {
+            throw new BusinessException(401, "账号已被禁用");
+        }
+        UserInfoVO vo = new UserInfoVO();
+        vo.setId(sysUser.getId());
+        vo.setUsername(sysUser.getUsername());
+        vo.setNickname(sysUser.getNickname());
+        vo.setRole(sysUser.getRole());
+        vo.setStatus(sysUser.getStatus());
+        vo.setCreateTime(sysUser.getCreateTime());
+        return vo;
+    }
+    }
