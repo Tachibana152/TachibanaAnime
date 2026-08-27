@@ -1,5 +1,8 @@
 package com.tachibana.projectsekai05.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tachibana.projectsekai05.common.constant.RedisConstants;
 import com.tachibana.projectsekai05.common.enums.ResultCode;
 import com.tachibana.projectsekai05.common.exception.BusinessException;
@@ -8,26 +11,41 @@ import com.tachibana.projectsekai05.dto.UserInfoVO;
 import com.tachibana.projectsekai05.dto.UserQueryDTO;
 import com.tachibana.projectsekai05.dto.UserRoleDTO;
 import com.tachibana.projectsekai05.dto.UserStatusDTO;
+import com.tachibana.projectsekai05.dto.UserVO;
 import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.UserAdminService;
-import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
- * 用户管理服务实现（占位，待实现）
+ * 用户管理服务实现（超级管理员）
  */
 @Service
 public class UserAdminServiceImpl implements UserAdminService {
-@Resource
-private SysUserMapper sysUserMapper;
-@Resource
-private RedisTemplate redisTemplate;
+
+    private final SysUserMapper sysUserMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public UserAdminServiceImpl(SysUserMapper sysUserMapper, RedisTemplate<String, Object> redisTemplate) {
+        this.sysUserMapper = sysUserMapper;
+        this.redisTemplate = redisTemplate;
+    }
+
     @Override
     public PageResult<UserInfoVO> pageUsers(UserQueryDTO query) {
-        throw new UnsupportedOperationException("接口待实现");
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StringUtils.hasText(query.getUsername()), SysUser::getUsername, query.getUsername())
+                .like(StringUtils.hasText(query.getNickname()), SysUser::getNickname, query.getNickname())
+                .orderByDesc(SysUser::getId);
+        IPage<SysUser> page = sysUserMapper.selectPage(new Page<>(query.getPageNum(), query.getPageSize()), wrapper);
+        List<UserInfoVO> records = page.getRecords().stream().map(UserInfoVO::from).toList();
+        return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
     }
 
     @Override
@@ -43,16 +61,34 @@ private RedisTemplate redisTemplate;
         sysUserMapper.updateById(sysUser);
         redisTemplate.delete(RedisConstants.TOKEN_PREFIX + id);
         redisTemplate.delete(RedisConstants.USER_LOGIN_PREFIX + id);
-        return;
     }
 
     @Override
     public void updateRole(Long id, UserRoleDTO dto) {
-        throw new UnsupportedOperationException("接口待实现");
+        if (id.equals(UserContext.getUserId())) {
+            throw new BusinessException(400, "不能降低自己的角色");
+        }
+        SysUser sysUser = sysUserMapper.selectById(id);
+        if (sysUser == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND);
+        }
+        sysUser.setRole(dto.getRole());
+        sysUserMapper.updateById(sysUser);
+        redisTemplate.opsForValue().set(RedisConstants.USER_LOGIN_PREFIX + id, UserVO.from(sysUser),
+                RedisConstants.DEFAULT_EXPIRE, TimeUnit.SECONDS);
     }
 
     @Override
     public void delete(Long id) {
-        throw new UnsupportedOperationException("接口待实现");
+        if (id.equals(UserContext.getUserId())) {
+            throw new BusinessException(400, "不能删除自己的账号");
+        }
+        SysUser sysUser = sysUserMapper.selectById(id);
+        if (sysUser == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND);
+        }
+        sysUserMapper.deleteById(id);
+        redisTemplate.delete(RedisConstants.TOKEN_PREFIX + id);
+        redisTemplate.delete(RedisConstants.USER_LOGIN_PREFIX + id);
     }
 }

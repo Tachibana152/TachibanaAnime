@@ -6,6 +6,7 @@ import com.tachibana.projectsekai05.common.constant.SecurityConstants;
 import com.tachibana.projectsekai05.common.enums.ResultCode;
 import com.tachibana.projectsekai05.common.result.R;
 import com.tachibana.projectsekai05.common.utils.JwtUtil;
+import com.tachibana.projectsekai05.dto.UserVO;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -65,9 +66,16 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return writeUnauthorized(response);
             }
         }
+        String role = claims.get("role", String.class);
+        if (redisSessionEnabled) {
+            Object cached = redisTemplate.opsForValue().get(RedisConstants.USER_LOGIN_PREFIX + userId);
+            if (cached instanceof UserVO vo && vo.getRole() != null) {
+                role = vo.getRole();
+            }
+        }
         UserContext.set("userId", userId);
         UserContext.set("username", claims.get("username", String.class));
-        UserContext.set("role", claims.get("role", String.class));
+        UserContext.set("role", role);
 
         RequireRole requireRole = handlerMethod.getMethodAnnotation(RequireRole.class);
         if (requireRole == null) {

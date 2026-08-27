@@ -19,6 +19,14 @@ spring:
   docker:
     compose:
       enabled: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# 文件上传配置
+file:
+  upload-dir: uploads/
 
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml

@@ -1,5 +1,6 @@
 package com.tachibana.projectsekai05.dto;
 
+import com.tachibana.projectsekai05.entity.SysUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -30,4 +31,15 @@ public class UserInfoVO implements Serializable {
 
     @Schema(description = "注册时间")
     private LocalDateTime createTime;
+
+    public static UserInfoVO from(SysUser user) {
+        UserInfoVO vo = new UserInfoVO();
+        vo.setId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setNickname(user.getNickname());
+        vo.setRole(user.getRole());
+        vo.setStatus(user.getStatus());
+        vo.setCreateTime(user.getCreateTime());
+        return vo;
+    }
 }
