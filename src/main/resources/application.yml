@@ -48,6 +48,11 @@ sign:
   algorithm: SHA256withRSA
   enabled: false
 
+# 安全：是否启用 Redis 会话校验（true=JWT+Redis 双校验，false=仅 JWT）
+security:
+  redis-session:
+    enabled: true
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

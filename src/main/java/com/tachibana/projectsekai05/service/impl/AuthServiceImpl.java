@@ -1,6 +1,7 @@
 package com.tachibana.projectsekai05.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.tachibana.projectsekai05.common.constant.RedisConstants;
 import com.tachibana.projectsekai05.common.constant.SecurityConstants;
 import com.tachibana.projectsekai05.common.exception.BusinessException;
 import com.tachibana.projectsekai05.common.utils.JwtUtil;
@@ -17,9 +18,11 @@ import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.AuthService;
 import jakarta.annotation.Resource;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -30,11 +33,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final SysUserMapper sysUserMapper;
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
 
-    public AuthServiceImpl(SysUserMapper sysUserMapper, JwtUtil jwtUtil) {
+    public AuthServiceImpl(SysUserMapper sysUserMapper, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate) {
         this.sysUserMapper = sysUserMapper;
         this.jwtUtil = jwtUtil;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -49,6 +54,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
+
+        redisTemplate.opsForValue().set(RedisConstants.TOKEN_PREFIX + user.getId(), token,
+                RedisConstants.TOKEN_EXPIRE, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(RedisConstants.USER_LOGIN_PREFIX + user.getId(), UserVO.from(user),
+                RedisConstants.DEFAULT_EXPIRE, TimeUnit.SECONDS);
 
         LoginVO vo = new LoginVO();
         vo.setToken(token);

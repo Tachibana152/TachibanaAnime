@@ -5,7 +5,11 @@ import com.tachibana.projectsekai05.dto.UserInfoVO;
 import com.tachibana.projectsekai05.dto.UserQueryDTO;
 import com.tachibana.projectsekai05.dto.UserRoleDTO;
 import com.tachibana.projectsekai05.dto.UserStatusDTO;
+import com.tachibana.projectsekai05.entity.SysUser;
+import com.tachibana.projectsekai05.mapper.SysUserMapper;
+import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.UserAdminService;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,6 +17,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class UserAdminServiceImpl implements UserAdminService {
+@Resource
+private SysUserMapper sysUserMapper;
 
     @Override
     public PageResult<UserInfoVO> pageUsers(UserQueryDTO query) {
@@ -21,7 +27,9 @@ public class UserAdminServiceImpl implements UserAdminService {
 
     @Override
     public void updateStatus(Long id, UserStatusDTO dto) {
-        throw new UnsupportedOperationException("接口待实现");
+        SysUser sysUser = sysUserMapper.selectById(id);
+
+        return;
     }
 
     @Override

@@ -48,4 +48,7 @@ public class PostVO implements Serializable {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "是否直接发布（仅发帖接口返回：管理员发帖 true，普通用户待审核 false）")
+    private Boolean autoApproved;
 }
