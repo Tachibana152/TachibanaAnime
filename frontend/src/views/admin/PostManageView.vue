@@ -56,7 +56,7 @@
       <div class="review-content">
         <h3>{{ current?.title }}</h3>
         <p class="text-muted">作者：{{ current?.username }} · {{ current?.createTime }}</p>
-        <div class="rich-text review-body">{{ current?.content }}</div>
+        <div class="rich-body review-body" v-html="renderRich(current?.content)"></div>
       </div>
       <el-form label-position="top">
         <el-form-item label="审核结果">
@@ -82,6 +82,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { forumApi } from '@/api/forum'
 import { POST_STATUS, POST_STATUS_LABEL } from '@/constants'
+import { renderRich } from '@/utils/rich'
 
 const activeTab = ref('all')
 const keyword = ref('')

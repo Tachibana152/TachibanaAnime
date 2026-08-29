@@ -80,6 +80,44 @@ a {
   color: #444;
 }
 
+/* 富文本正文（内嵌 HTML 标签，换行由 <br> 控制） */
+.rich-body {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.9;
+  font-size: 15px;
+  color: #444;
+}
+.rich-body p {
+  margin: 0 0 10px;
+}
+.rich-body h1,
+.rich-body h2,
+.rich-body h3,
+.rich-body h4 {
+  margin: 14px 0 8px;
+  line-height: 1.4;
+}
+.rich-body blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 4px solid var(--primary);
+  background: rgba(42, 163, 255, 0.06);
+  border-radius: 4px;
+}
+.rich-body pre {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.rich-body code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 /* 搜索高亮 */
 .highlight {
   color: #e5484d;

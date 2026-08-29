@@ -179,10 +179,24 @@
           <el-input v-model="form.quote" placeholder="详情页语录装饰，选填" />
         </el-form-item>
         <el-form-item label="简介">
-          <el-input v-model="form.synopsis" type="textarea" :rows="3" />
+          <div style="width: 100%">
+            <RichToolbar
+              @wrap="(p) => wrapField('synopsis', p)"
+              @color="(c) => wrapColor('synopsis', c)"
+              @size="(n) => wrapSize('synopsis', n)"
+            />
+            <el-input v-model="form.synopsis" ref="synopsisRef" type="textarea" :rows="3" />
+          </div>
         </el-form-item>
         <el-form-item label="内容">
-          <el-input v-model="form.content" type="textarea" :rows="5" placeholder="分集/内容介绍，支持换行" />
+          <div style="width: 100%">
+            <RichToolbar
+              @wrap="(p) => wrapField('content', p)"
+              @color="(c) => wrapColor('content', c)"
+              @size="(n) => wrapSize('content', n)"
+            />
+            <el-input v-model="form.content" ref="contentRef" type="textarea" :rows="5" placeholder="分集/内容介绍，支持换行与内嵌样式标签" />
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -194,10 +208,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { animeApi } from '@/api/anime'
 import { fileApi } from '@/api/user'
+import RichToolbar from '@/components/RichToolbar.vue'
 
 const list = ref([])
 const total = ref(0)
@@ -264,6 +279,36 @@ async function uploadBackground(option) {
   } catch (e) {
     ElMessage.error(e.message)
   }
+}
+
+const synopsisRef = ref(null)
+const contentRef = ref(null)
+
+function textareaEl(field) {
+  const refEl = field === 'synopsis' ? synopsisRef.value : contentRef.value
+  return refEl?.$el?.querySelector('textarea') || null
+}
+
+function wrapField(field, { before = '', after = '', fallback = '文本' } = {}) {
+  const ta = textareaEl(field)
+  if (!ta) return
+  const value = ta.value
+  const start = ta.selectionStart
+  const end = ta.selectionEnd
+  const sel = value.slice(start, end) || fallback
+  form[field] = value.slice(0, start) + before + sel + after + value.slice(end)
+  nextTick(() => {
+    ta.focus()
+    ta.setSelectionRange(start + before.length, start + before.length + sel.length)
+  })
+}
+
+function wrapColor(field, color) {
+  if (color) wrapField(field, { before: `<span style="color:${color}">`, after: '</span>', fallback: '彩色文字' })
+}
+
+function wrapSize(field, size) {
+  if (size) wrapField(field, { before: `<span style="font-size:${size}px">`, after: '</span>', fallback: '不同字号' })
 }
 
 async function save() {

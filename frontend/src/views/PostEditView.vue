@@ -7,14 +7,22 @@
         <el-input v-model="form.title" maxlength="60" show-word-limit placeholder="请输入帖子标题" />
       </el-form-item>
       <el-form-item label="正文" prop="content">
-        <el-input
-          v-model="form.content"
-          type="textarea"
-          :rows="12"
-          maxlength="5000"
-          show-word-limit
-          placeholder="请输入正文内容，支持多段文字（空行分段）…"
-        />
+        <div style="width: 100%">
+          <RichToolbar
+            @wrap="(p) => wrapField(p)"
+            @color="(c) => wrapColor(c)"
+            @size="(n) => wrapSize(n)"
+          />
+          <el-input
+            v-model="form.content"
+            ref="contentRef"
+            type="textarea"
+            :rows="12"
+            maxlength="5000"
+            show-word-limit
+            placeholder="请输入正文内容，支持多段文字（空行分段）与内嵌样式标签…"
+          />
+        </div>
       </el-form-item>
       <el-form-item label="来源链接（选填）">
         <el-input v-model="form.sourceUrl" placeholder="https://bgm.tv/..." clearable />
@@ -29,14 +37,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { forumApi } from '@/api/forum'
+import RichToolbar from '@/components/RichToolbar.vue'
 
 const route = useRoute()
 const router = useRouter()
 const formRef = ref(null)
+const contentRef = ref(null)
 const saving = ref(false)
 const isEdit = computed(() => !!route.params.id)
 
@@ -45,6 +55,28 @@ const form = reactive({ title: '', content: '', sourceUrl: '' })
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   content: [{ required: true, message: '请输入正文', trigger: 'blur' }],
+}
+
+function wrapField({ before = '', after = '', fallback = '文本' } = {}) {
+  const ta = contentRef.value?.$el?.querySelector('textarea')
+  if (!ta) return
+  const value = ta.value
+  const start = ta.selectionStart
+  const end = ta.selectionEnd
+  const sel = value.slice(start, end) || fallback
+  form.content = value.slice(0, start) + before + sel + after + value.slice(end)
+  nextTick(() => {
+    ta.focus()
+    ta.setSelectionRange(start + before.length, start + before.length + sel.length)
+  })
+}
+
+function wrapColor(color) {
+  if (color) wrapField({ before: `<span style="color:${color}">`, after: '</span>', fallback: '彩色文字' })
+}
+
+function wrapSize(size) {
+  if (size) wrapField({ before: `<span style="font-size:${size}px">`, after: '</span>', fallback: '不同字号' })
 }
 
 async function loadPost() {

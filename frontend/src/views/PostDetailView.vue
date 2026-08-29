@@ -24,7 +24,7 @@
           </el-dropdown>
         </div>
 
-        <div class="rich-text body">{{ post.content }}</div>
+        <div class="rich-body body" v-html="renderRich(post.content)"></div>
 
         <a
           v-if="post.sourceUrl"
@@ -88,6 +88,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { forumApi } from '@/api/forum'
 import { useUserStore } from '@/stores/user'
+import { renderRich } from '@/utils/rich'
 import ReplyItem from '@/components/ReplyItem.vue'
 
 const route = useRoute()

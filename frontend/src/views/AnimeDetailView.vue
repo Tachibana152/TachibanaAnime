@@ -45,7 +45,7 @@
           <!-- 右栏：简介 / 语录 / 内容 -->
           <div class="themidlist">
             <div class="section-title">简介</div>
-            <div class="content1 rich-text" v-html="hl(anime.synopsis)"></div>
+            <div class="content1 rich-body" v-html="renderRich(anime.synopsis, route.query.keyword)"></div>
 
             <div class="quote-box" v-if="anime.quote">
               <span class="qmark qmark-l">"</span>
@@ -55,7 +55,7 @@
             </div>
 
             <div class="section-title">内容</div>
-            <div class="content2 rich-text" v-html="hl(anime.content)"></div>
+            <div class="content2 rich-body" v-html="renderRich(anime.content, route.query.keyword)"></div>
           </div>
         </div>
       </div>
@@ -70,6 +70,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animeApi } from '@/api/anime'
 import { highlightText } from '@/utils/highlight'
+import { renderRich } from '@/utils/rich'
 
 const route = useRoute()
 const router = useRouter()
