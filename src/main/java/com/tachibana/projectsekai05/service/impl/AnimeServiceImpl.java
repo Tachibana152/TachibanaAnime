@@ -123,6 +123,7 @@ public class AnimeServiceImpl implements AnimeService {
         anime.setTitleJp(dto.getTitleJp());
         anime.setCategory(dto.getCategory());
         anime.setCover(dto.getCover());
+        anime.setBackground(dto.getBackground());
         anime.setOriginal(dto.getOriginal());
         anime.setDirector(dto.getDirector());
         anime.setWriter(dto.getWriter());
@@ -156,6 +157,7 @@ public class AnimeServiceImpl implements AnimeService {
         vo.setTitleJp(anime.getTitleJp());
         vo.setCategory(anime.getCategory());
         vo.setCover(anime.getCover());
+        vo.setBackground(anime.getBackground());
         vo.setOriginal(anime.getOriginal());
         vo.setDirector(anime.getDirector());
         vo.setWriter(anime.getWriter());

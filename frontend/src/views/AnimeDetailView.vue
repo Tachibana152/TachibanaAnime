@@ -1,6 +1,7 @@
 <template>
   <div class="page-container" v-loading="loading">
     <template v-if="anime">
+      <div class="anime-bg" :style="{ backgroundImage: `url(${anime.background || anime.cover})` }"></div>
       <div class="crumb">
         <el-button link @click="router.push('/home')"><el-icon><Back /></el-icon> 返回首页</el-button>
       </div>
@@ -95,14 +96,28 @@ onMounted(load)
 </script>
 
 <style scoped>
+.anime-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
 .crumb {
   margin-bottom: 12px;
+  position: relative;
 }
 .detail-card {
   max-width: 1200px;
   margin: 0 auto;
   border: 2px solid rgb(221, 221, 221);
-  background-color: rgba(244, 240, 240, 0.92);
+  background-color: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(3px);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -162,6 +177,8 @@ onMounted(load)
 }
 .meta-list li {
   border-bottom: 1px solid rgb(192, 187, 187);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
   padding: 7px;
   font-size: 14px;
   margin-top: 12px;
@@ -191,6 +208,8 @@ onMounted(load)
   line-height: 26px;
   color: rgb(63, 61, 61);
   padding: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
   border-bottom: 1px solid rgb(192, 187, 187);
 }
 .content2 {
@@ -199,6 +218,8 @@ onMounted(load)
   line-height: 30px;
   color: rgb(63, 61, 61);
   padding: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
   border-bottom: 1px solid rgb(192, 187, 187);
 }
 .quote-box {
@@ -206,6 +227,8 @@ onMounted(load)
   margin: 34px 0 10px;
   padding: 6px 40px 16px 60px;
   font-style: italic;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
 }
 .qmark {
   position: absolute;

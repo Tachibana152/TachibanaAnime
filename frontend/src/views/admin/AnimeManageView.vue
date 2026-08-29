@@ -89,6 +89,22 @@
             </div>
           </el-form-item>
         </div>
+        <el-form-item label="背图">
+          <div class="cover-upload">
+            <el-upload
+              :show-file-list="false"
+              :http-request="uploadBackground"
+              accept="image/*"
+            >
+              <img v-if="form.background" :src="form.background" class="bg-preview" />
+              <div v-else class="bg-placeholder">
+                <el-icon><Plus /></el-icon>
+                <span>上传背图</span>
+              </div>
+            </el-upload>
+            <el-input v-model="form.background" placeholder="详情页大图背景，选填；留空则用封面作背景" style="flex: 1" />
+          </div>
+        </el-form-item>
         <div class="form-row">
           <el-form-item label="原作">
             <el-input v-model="form.original" />
@@ -193,7 +209,7 @@ const saving = ref(false)
 const query = reactive({ category: '', keyword: '' })
 
 const emptyForm = () => ({
-  id: null, title: '', titleJp: '', category: 'NEW', cover: '',
+  id: null, title: '', titleJp: '', category: 'NEW', cover: '', background: '',
   original: '', director: '', writer: '', episodes: 1, airDate: '', airWeekday: '', production: '',
   storyboard: '', performance: '', music: '', charaOriginal: '', charaDesign: '',
   seriesComposition: '', artDirector: '', colorDesign: '', chiefAnimationDirector: '',
@@ -235,6 +251,16 @@ async function uploadCover(option) {
     const res = await fileApi.upload(option.file)
     form.cover = res.url
     ElMessage.success('封面上传成功')
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function uploadBackground(option) {
+  try {
+    const res = await fileApi.upload(option.file)
+    form.background = res.url
+    ElMessage.success('背图上传成功')
   } catch (e) {
     ElMessage.error(e.message)
   }
@@ -316,6 +342,25 @@ onMounted(load)
 .cover-placeholder {
   width: 90px;
   height: 120px;
+  border: 1px dashed #c0c4cc;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  cursor: pointer;
+}
+.bg-preview {
+  width: 150px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.bg-placeholder {
+  width: 150px;
+  height: 85px;
   border: 1px dashed #c0c4cc;
   border-radius: 6px;
   display: flex;

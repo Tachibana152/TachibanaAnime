@@ -28,6 +28,9 @@ public class AnimeVO implements Serializable {
     @Schema(description = "封面URL")
     private String cover;
 
+    @Schema(description = "网页背图URL（详情页大图背景）")
+    private String background;
+
     @Schema(description = "原作")
     private String original;
 

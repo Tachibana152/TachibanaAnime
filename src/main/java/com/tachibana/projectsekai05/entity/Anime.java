@@ -21,6 +21,9 @@ public class Anime extends BaseEntity {
 
     private String cover;
 
+    /** 网页背图（详情页大图背景） */
+    private String background;
+
     private String original;
 
     private String director;

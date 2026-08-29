@@ -26,6 +26,9 @@ public class AnimeDTO implements Serializable {
     @Schema(description = "封面图片URL", example = "/uploads/anime/Frieren2nd.jpg")
     private String cover;
 
+    @Schema(description = "网页背图URL（详情页大图背景）", example = "/uploads/anime/ef_background.jpg")
+    private String background;
+
     @Schema(description = "原作")
     private String original;
 
