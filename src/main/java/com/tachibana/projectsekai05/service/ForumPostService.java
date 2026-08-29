@@ -26,6 +26,11 @@ public interface ForumPostService {
     PageResult<PostVO> myPosts(PostQueryDTO query);
 
     /**
+     * 某用户已发布的帖子分页（用户主页用）
+     */
+    PageResult<PostVO> pageByUser(Long userId, PostQueryDTO query);
+
+    /**
      * 发帖（普通用户待审核；ADMIN/SUPER_ADMIN 直接发布）
      */
     PostVO create(PostDTO dto);

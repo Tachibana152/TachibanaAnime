@@ -61,6 +61,81 @@ export const mockApi = {
     const { password: _p, ...safe } = user
     return ok(safe)
   },
+  async updateProfile(token, { nickname, bio }) {
+    await delay()
+    const user = requireAuth(token)
+    if (nickname !== undefined) {
+      if (!String(nickname).trim()) return fail(400, '昵称不能为空')
+      user.nickname = String(nickname).trim()
+    }
+    if (bio !== undefined) user.bio = bio
+    const { password: _p, ...safe } = user
+    return ok(safe)
+  },
+  async submitAvatar(token, avatarUrl) {
+    await delay()
+    const user = requireAuth(token)
+    if (!avatarUrl) return fail(400, '头像不能为空')
+    user.avatarPending = avatarUrl
+    const { password: _p, ...safe } = user
+    return ok(safe)
+  },
+
+  // ================= 用户主页 =================
+  async userProfile(id) {
+    await delay()
+    const u = users.find((x) => x.id === Number(id))
+    if (!u) return fail(404, '用户不存在')
+    const postCount = posts.filter((p) => p.userId === u.id && p.status === 1).length
+    const animeCount = animes.filter((a) => (a.contributorIds || []).includes(u.id)).length
+    const { password: _p, ...safe } = u
+    return ok({ ...safe, postCount, animeCount })
+  },
+  async userPosts(id, { pageNum = 1, pageSize = 10 } = {}) {
+    await delay()
+    let list = posts.filter((p) => p.userId === Number(id) && p.status === 1)
+    list = [...list].sort((a, b) => (b.top - a.top) || (new Date(b.createTime) - new Date(a.createTime)))
+    return ok(paginate(list, pageNum, pageSize))
+  },
+  async userAnimes(id, { pageNum = 1, pageSize = 10, category, keyword } = {}) {
+    await delay()
+    const uid = Number(id)
+    let list = animes.filter((a) => (a.contributorIds || []).includes(uid))
+    list = list.filter((a) => !category || a.category === category)
+    list = list.filter((a) => animeMatch(a, keyword))
+    list = [...list].sort((a, b) => a.sort - b.sort)
+    return ok(paginate(list, pageNum, pageSize))
+  },
+  async animeContributors(animeId) {
+    await delay()
+    const a = animes.find((x) => x.id === Number(animeId))
+    if (!a) return fail(404, '动画不存在')
+    const ids = a.contributorIds || []
+    return ok(users.filter((u) => ids.includes(u.id)).map(({ password: _p, ...safe }) => safe))
+  },
+  async listAdmins(token) {
+    await delay()
+    requireRole(token, [ROLE.ADMIN, ROLE.SUPER_ADMIN])
+    return ok(users.filter((u) => (u.role === ROLE.ADMIN || u.role === ROLE.SUPER_ADMIN) && u.status === 1)
+      .map(({ id, username, nickname, avatar }) => ({ id, username, nickname, avatar })))
+  },
+
+  // ================= 头像审核（超级管理员） =================
+  async listAvatarAudits(token) {
+    await delay()
+    requireRole(token, [ROLE.SUPER_ADMIN])
+    return ok(users.filter((u) => u.avatarPending).map(({ password: _p, ...safe }) => safe))
+  },
+  async reviewAvatar(token, id, approve) {
+    await delay()
+    requireRole(token, [ROLE.SUPER_ADMIN])
+    const u = users.find((x) => x.id === Number(id))
+    if (!u) return fail(404, '用户不存在')
+    if (!u.avatarPending) return fail(400, '该用户没有待审核的头像')
+    if (approve) u.avatar = u.avatarPending
+    u.avatarPending = ''
+    return ok(null)
+  },
 
   // ================= 动漫 =================
   async listAnimes({ pageNum = 1, pageSize = 10, category, keyword } = {}) {
@@ -79,17 +154,19 @@ export const mockApi = {
   },
   async createAnime(token, form) {
     await delay()
-    requireRole(token, [ROLE.ADMIN, ROLE.SUPER_ADMIN])
+    const user = requireRole(token, [ROLE.ADMIN, ROLE.SUPER_ADMIN])
     const a = { id: nextId('anime'), category: 'CLASSIC', viewCount: 0, sort: 50, createTime: nowStr(), ...form }
+    a.contributorIds = [...new Set([user.id, ...(form.contributorIds || [])])]
     animes.push(a)
     return ok(a)
   },
   async updateAnime(token, id, form) {
     await delay()
-    requireRole(token, [ROLE.ADMIN, ROLE.SUPER_ADMIN])
+    const user = requireRole(token, [ROLE.ADMIN, ROLE.SUPER_ADMIN])
     const a = animes.find((x) => x.id === Number(id))
     if (!a) return fail(404, '动画不存在')
     Object.assign(a, form, { id: Number(id) })
+    a.contributorIds = [...new Set([user.id, ...(form.contributorIds || a.contributorIds || [])])]
     return ok(a)
   },
   async deleteAnime(token, id) {
@@ -274,10 +351,11 @@ export const mockApi = {
   },
 
   // ================= 文件 =================
-  async upload(token, file) {
+  async upload(token, file, type) {
     await delay()
     requireAuth(token)
     const name = encodeURIComponent(file?.name || 'cover.jpg')
-    return ok({ url: `/uploads/anime/${name}` })
+    const dir = type === 'avatar' ? '/uploads/avatar/' : '/uploads/anime/'
+    return ok({ url: `${dir}${name}` })
   },
 }

@@ -16,4 +16,10 @@ export const authApi = {
   me() {
     return USE_MOCK ? mockApi.me(token()) : request.get('/auth/me')
   },
+  updateProfile(form) {
+    return USE_MOCK ? mockApi.updateProfile(token(), form) : request.put('/auth/profile', form)
+  },
+  submitAvatar(avatarUrl) {
+    return USE_MOCK ? mockApi.submitAvatar(token(), avatarUrl) : request.put('/auth/avatar', { avatarUrl })
+  },
 }

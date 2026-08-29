@@ -35,3 +35,8 @@ export const ANIME_CATEGORY_LABEL = {
 
 export const TOKEN_KEY = 'tb_token'
 export const USER_KEY = 'tb_user'
+
+// 默认头像（用户未设置头像时的兜底显示）
+export const DEFAULT_AVATAR = '/uploads/avatar/default.webp'
+// 头像上传大小上限（1MB）
+export const AVATAR_MAX_SIZE = 1 * 1024 * 1024

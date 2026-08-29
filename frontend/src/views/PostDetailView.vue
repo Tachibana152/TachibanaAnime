@@ -11,7 +11,7 @@
           {{ post.title }}
         </h1>
         <div class="meta">
-          <span class="author">{{ post.username }}</span>
+          <span class="author" @click="router.push(`/user/${post.userId}`)">{{ post.username }}</span>
           <span class="text-muted">{{ post.createTime }}</span>
           <span class="text-muted"><el-icon><View /></el-icon> {{ post.viewCount }}</span>
           <el-dropdown v-if="canManage" trigger="click" class="ops">
@@ -61,6 +61,7 @@
             :key="r.id"
             :reply="r"
             @remove="onDeleteReply(r)"
+            @author="() => router.push(`/user/${r.userId}`)"
           />
           <el-empty v-if="!replyLoading && !replies.length" description="还没有回复，快来抢沙发" :image-size="70" />
         </div>
@@ -205,6 +206,7 @@ onMounted(() => {
   color: var(--primary);
   font-weight: 600;
   font-size: 14px;
+  cursor: pointer;
 }
 .meta .el-icon {
   vertical-align: -2px;

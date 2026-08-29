@@ -19,6 +19,7 @@ import com.tachibana.projectsekai05.mapper.ForumPostMapper;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.ForumPostService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -53,6 +54,18 @@ public class ForumPostServiceImpl implements ForumPostService {
                     .or().like(ForumPost::getContent, query.getKeyword()));
         }
         wrapper.orderByDesc(ForumPost::getTop).orderByDesc(ForumPost::getCreateTime);
+        IPage<ForumPost> page = forumPostMapper.selectPage(new Page<>(query.getPageNum(), query.getPageSize()), wrapper);
+        List<PostVO> records = page.getRecords().stream().map(this::toVO).toList();
+        return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
+    }
+
+    @Override
+    public PageResult<PostVO> pageByUser(Long userId, PostQueryDTO query) {
+        LambdaQueryWrapper<ForumPost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ForumPost::getUserId, userId)
+                .eq(ForumPost::getStatus, PostConstants.STATUS_PUBLISHED)
+                .orderByDesc(ForumPost::getTop)
+                .orderByDesc(ForumPost::getCreateTime);
         IPage<ForumPost> page = forumPostMapper.selectPage(new Page<>(query.getPageNum(), query.getPageSize()), wrapper);
         List<PostVO> records = page.getRecords().stream().map(this::toVO).toList();
         return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
@@ -173,20 +186,15 @@ public class ForumPostServiceImpl implements ForumPostService {
         return SecurityConstants.ROLE_ADMIN.equals(role) || SecurityConstants.ROLE_SUPER_ADMIN.equals(role);
     }
 
+    /**
+     * 帖子实体 -> VO 转换。
+     * 约定：同名字段由 BeanUtils 自动拷贝；username 为派生字段（关联用户表查询昵称），需手动填充。
+     * 新增字段请保持实体与 VO 同名，否则需在此手动 set。
+     */
     private PostVO toVO(ForumPost post) {
         PostVO vo = new PostVO();
-        vo.setId(post.getId());
-        vo.setUserId(post.getUserId());
+        BeanUtils.copyProperties(post, vo);
         vo.setUsername(displayName(post.getUserId()));
-        vo.setTitle(post.getTitle());
-        vo.setContent(post.getContent());
-        vo.setSourceUrl(post.getSourceUrl());
-        vo.setStatus(post.getStatus());
-        vo.setRejectReason(post.getRejectReason());
-        vo.setTop(post.getTop());
-        vo.setViewCount(post.getViewCount());
-        vo.setReplyCount(post.getReplyCount());
-        vo.setCreateTime(post.getCreateTime());
         return vo;
     }
 

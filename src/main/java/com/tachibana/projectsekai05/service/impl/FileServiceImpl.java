@@ -19,11 +19,14 @@ import java.util.UUID;
 
 /**
  * 文件上传服务实现（本地磁盘存储，可访问 URL 为 /uploads/xxx）
+ * <p>类型约定：type=avatar 时限制 1MB 并存入 uploads/avatar/ 子目录；其余默认 10MB。
  */
 @Service
 public class FileServiceImpl implements FileService {
 
     private static final long MAX_SIZE = 10 * 1024 * 1024L;
+    private static final long AVATAR_MAX_SIZE = 1 * 1024 * 1024L;
+    private static final String AVATAR_SUB_DIR = "avatar";
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "gif", "webp");
 
     private final String uploadDir;
@@ -37,12 +40,14 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Map<String, String> upload(MultipartFile file) {
+    public Map<String, String> upload(MultipartFile file, String type) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(400, "请选择要上传的文件");
         }
-        if (file.getSize() > MAX_SIZE) {
-            throw new BusinessException(400, "文件大小不能超过10MB");
+        boolean avatar = "avatar".equals(type);
+        long maxSize = avatar ? AVATAR_MAX_SIZE : MAX_SIZE;
+        if (file.getSize() > maxSize) {
+            throw new BusinessException(400, avatar ? "头像大小不能超过1MB" : "文件大小不能超过10MB");
         }
         String originalFilename = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
         String ext = "";
@@ -57,6 +62,9 @@ public class FileServiceImpl implements FileService {
         String filename = UUID.randomUUID().toString().replace("-", "") + "." + ext;
         try {
             Path dir = Paths.get(uploadDir).toAbsolutePath();
+            if (avatar) {
+                dir = dir.resolve(AVATAR_SUB_DIR);
+            }
             Files.createDirectories(dir);
             Path target = dir.resolve(filename);
             try (InputStream in = file.getInputStream()) {
@@ -65,6 +73,7 @@ public class FileServiceImpl implements FileService {
         } catch (IOException e) {
             throw new BusinessException(500, "文件保存失败: " + e.getMessage());
         }
-        return Map.of("url", "/uploads/" + filename);
+        String url = avatar ? "/uploads/avatar/" + filename : "/uploads/" + filename;
+        return Map.of("url", url);
     }
 }

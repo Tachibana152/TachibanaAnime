@@ -9,7 +9,7 @@
     </div>
     <p class="content preview">{{ post.content }}</p>
     <div class="foot">
-      <span class="author">
+      <span class="author" title="查看主页" @click.stop="$emit('author', post)">
         <el-icon><User /></el-icon>
         {{ post.username }}
       </span>
@@ -30,7 +30,7 @@ const props = defineProps({
   post: { type: Object, required: true },
   showStatus: { type: Boolean, default: false },
 })
-defineEmits(['open'])
+defineEmits(['open', 'author'])
 
 const statusType = computed(() => {
   if (props.post.status === POST_STATUS.PUBLISHED) return 'success'
@@ -90,6 +90,7 @@ const statusLabel = computed(() => POST_STATUS_LABEL[props.post.status] || '未�
   gap: 4px;
   color: var(--primary);
   font-weight: 600;
+  cursor: pointer;
 }
 .stats {
   margin-left: auto;

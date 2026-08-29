@@ -3,6 +3,7 @@ package com.tachibana.projectsekai05.controller;
 import com.tachibana.projectsekai05.common.constant.SecurityConstants;
 import com.tachibana.projectsekai05.common.result.PageResult;
 import com.tachibana.projectsekai05.common.result.R;
+import com.tachibana.projectsekai05.dto.AvatarReviewDTO;
 import com.tachibana.projectsekai05.dto.UserInfoVO;
 import com.tachibana.projectsekai05.dto.UserQueryDTO;
 import com.tachibana.projectsekai05.dto.UserRoleDTO;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 用户管理接口（超级管理员）
@@ -59,6 +62,19 @@ public class AdminUserController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@PathVariable Long id) {
         userAdminService.delete(id);
+        return R.success();
+    }
+
+    @Operation(summary = "待审核头像列表", description = "需要 SUPER_ADMIN")
+    @GetMapping("/avatar-audits")
+    public R<List<UserInfoVO>> avatarAudits() {
+        return R.success(userAdminService.listAvatarAudits());
+    }
+
+    @Operation(summary = "头像审核", description = "通过（转正）或驳回，需要 SUPER_ADMIN")
+    @PutMapping("/avatar-audits/{id}")
+    public R<Void> reviewAvatar(@PathVariable Long id, @Valid @RequestBody AvatarReviewDTO dto) {
+        userAdminService.reviewAvatar(id, dto.isApprove());
         return R.success();
     }
 }

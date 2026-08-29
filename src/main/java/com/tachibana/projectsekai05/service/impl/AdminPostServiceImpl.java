@@ -16,6 +16,7 @@ import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.ForumPostMapper;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.service.AdminPostService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -81,20 +82,15 @@ public class AdminPostServiceImpl implements AdminPostService {
         return toVO(post);
     }
 
+    /**
+     * 帖子实体 -> VO 转换。
+     * 约定：同名字段由 BeanUtils 自动拷贝；username 为派生字段（关联用户表查询昵称），需手动填充。
+     * 新增字段请保持实体与 VO 同名，否则需在此手动 set。
+     */
     private PostVO toVO(ForumPost post) {
         PostVO vo = new PostVO();
-        vo.setId(post.getId());
-        vo.setUserId(post.getUserId());
+        BeanUtils.copyProperties(post, vo);
         vo.setUsername(displayName(post.getUserId()));
-        vo.setTitle(post.getTitle());
-        vo.setContent(post.getContent());
-        vo.setSourceUrl(post.getSourceUrl());
-        vo.setStatus(post.getStatus());
-        vo.setRejectReason(post.getRejectReason());
-        vo.setTop(post.getTop());
-        vo.setViewCount(post.getViewCount());
-        vo.setReplyCount(post.getReplyCount());
-        vo.setCreateTime(post.getCreateTime());
         return vo;
     }
 

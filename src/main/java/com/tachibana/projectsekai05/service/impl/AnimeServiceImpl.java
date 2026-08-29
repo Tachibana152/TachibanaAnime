@@ -11,14 +11,22 @@ import com.tachibana.projectsekai05.common.result.PageResult;
 import com.tachibana.projectsekai05.dto.AnimeDTO;
 import com.tachibana.projectsekai05.dto.AnimeQueryDTO;
 import com.tachibana.projectsekai05.dto.AnimeVO;
+import com.tachibana.projectsekai05.dto.UserBriefVO;
 import com.tachibana.projectsekai05.entity.Anime;
+import com.tachibana.projectsekai05.entity.AnimeContributor;
+import com.tachibana.projectsekai05.mapper.AnimeContributorMapper;
 import com.tachibana.projectsekai05.mapper.AnimeMapper;
+import com.tachibana.projectsekai05.mapper.SysUserMapper;
+import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.AnimeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,10 +37,15 @@ import java.util.concurrent.TimeUnit;
 public class AnimeServiceImpl implements AnimeService {
 
     private final AnimeMapper animeMapper;
+    private final AnimeContributorMapper animeContributorMapper;
+    private final SysUserMapper sysUserMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public AnimeServiceImpl(AnimeMapper animeMapper, RedisTemplate<String, Object> redisTemplate) {
+    public AnimeServiceImpl(AnimeMapper animeMapper, AnimeContributorMapper animeContributorMapper,
+                            SysUserMapper sysUserMapper, RedisTemplate<String, Object> redisTemplate) {
         this.animeMapper = animeMapper;
+        this.animeContributorMapper = animeContributorMapper;
+        this.sysUserMapper = sysUserMapper;
         this.redisTemplate = redisTemplate;
     }
 
@@ -91,6 +104,11 @@ public class AnimeServiceImpl implements AnimeService {
         anime.setViewCount(0L);
         anime.setSort(dto.getTitle() == null ? 0 : dto.getTitle().hashCode() % 100);
         animeMapper.insert(anime);
+        // 内容贡献者：当前操作人 ∪ DTO 指定列表
+        List<Long> ids = mergeContributorIds(dto.getContributorIds());
+        if (!ids.isEmpty()) {
+            syncContributors(anime.getId(), ids);
+        }
         return toVO(anime);
     }
 
@@ -104,6 +122,8 @@ public class AnimeServiceImpl implements AnimeService {
         anime.setId(id);
         anime.setUpdateTime(LocalDateTime.now());
         animeMapper.updateById(anime);
+        // 内容贡献者：当前操作人 ∪ DTO 指定列表（先删后插，保证所有编辑过的人都计入）
+        syncContributors(id, mergeContributorIds(dto.getContributorIds()));
         redisTemplate.delete(RedisConstants.CACHE_ANIME_PREFIX + id);
         return toVO(animeMapper.selectById(id));
     }
@@ -114,75 +134,116 @@ public class AnimeServiceImpl implements AnimeService {
             throw new BusinessException(ResultCode.NOT_FOUND);
         }
         animeMapper.deleteById(id);
+        animeContributorMapper.delete(new LambdaQueryWrapper<AnimeContributor>()
+                .eq(AnimeContributor::getAnimeId, id));
         redisTemplate.delete(RedisConstants.CACHE_ANIME_PREFIX + id);
     }
 
+    @Override
+    public PageResult<AnimeVO> pageByContributor(Long userId, AnimeQueryDTO query) {
+        List<AnimeContributor> rels = animeContributorMapper.selectList(
+                new LambdaQueryWrapper<AnimeContributor>().eq(AnimeContributor::getUserId, userId));
+        if (rels.isEmpty()) {
+            return PageResult.of(List.of(), 0, query.getPageNum(), query.getPageSize());
+        }
+        List<Long> animeIds = rels.stream().map(AnimeContributor::getAnimeId).distinct().toList();
+        LambdaQueryWrapper<Anime> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(Anime::getId, animeIds)
+                .eq(StringUtils.hasText(query.getCategory()), Anime::getCategory, query.getCategory());
+        String keyword = query.getKeyword();
+        if (StringUtils.hasText(keyword)) {
+            wrapper.and(w -> w.like(Anime::getTitle, keyword)
+                    .or().like(Anime::getTitleJp, keyword)
+                    .or().like(Anime::getOriginal, keyword)
+                    .or().like(Anime::getDirector, keyword)
+                    .or().like(Anime::getWriter, keyword)
+                    .or().like(Anime::getProduction, keyword)
+                    .or().like(Anime::getSynopsis, keyword)
+                    .or().like(Anime::getContent, keyword)
+                    .or().like(Anime::getAlias, keyword));
+        }
+        wrapper.orderByAsc(Anime::getSort);
+        IPage<Anime> page = animeMapper.selectPage(new Page<>(query.getPageNum(), query.getPageSize()), wrapper);
+        List<AnimeVO> records = page.getRecords().stream().map(this::toVO).toList();
+        return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
+    }
+
+    @Override
+    public List<UserBriefVO> listContributors(Long animeId) {
+        List<AnimeContributor> rels = animeContributorMapper.selectList(
+                new LambdaQueryWrapper<AnimeContributor>().eq(AnimeContributor::getAnimeId, animeId));
+        List<Long> userIds = rels.stream().map(AnimeContributor::getUserId).distinct().toList();
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        return sysUserMapper.selectBatchIds(userIds).stream().map(u -> {
+            UserBriefVO vo = new UserBriefVO();
+            vo.setId(u.getId());
+            vo.setUsername(u.getUsername());
+            vo.setNickname(u.getNickname());
+            vo.setAvatar(u.getAvatar());
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 合并内容贡献者 ID：当前操作人 ∪ 传入列表（去重，忽略空值）
+     */
+    private List<Long> mergeContributorIds(List<Long> contributorIds) {
+        Long current = UserContext.getUserId();
+        LinkedHashSet<Long> set = new LinkedHashSet<>();
+        if (current != null) {
+            set.add(current);
+        }
+        if (contributorIds != null) {
+            for (Long id : contributorIds) {
+                if (id != null) {
+                    set.add(id);
+                }
+            }
+        }
+        return new ArrayList<>(set);
+    }
+
+    /**
+     * 同步动漫贡献者（先删后插，幂等）
+     */
+    private void syncContributors(Long animeId, List<Long> userIds) {
+        animeContributorMapper.delete(new LambdaQueryWrapper<AnimeContributor>()
+                .eq(AnimeContributor::getAnimeId, animeId));
+        LocalDateTime now = LocalDateTime.now();
+        for (Long userId : userIds) {
+            AnimeContributor rel = new AnimeContributor();
+            rel.setAnimeId(animeId);
+            rel.setUserId(userId);
+            rel.setCreateTime(now);
+            try {
+                animeContributorMapper.insert(rel);
+            } catch (Exception ignored) {
+                // 唯一键冲突（并发）忽略
+            }
+        }
+    }
+
+    /**
+     * DTO -> 实体转换。
+     * 约定：同名字段由 BeanUtils 自动拷贝；实体独有字段（id/viewCount/sort/审计字段）不在 DTO 中，不会被覆盖。
+     * 新增字段请保持 DTO 与实体同名，否则需在此手动 set。
+     */
     private Anime toEntity(AnimeDTO dto) {
         Anime anime = new Anime();
-        anime.setTitle(dto.getTitle());
-        anime.setTitleJp(dto.getTitleJp());
-        anime.setCategory(dto.getCategory());
-        anime.setCover(dto.getCover());
-        anime.setBackground(dto.getBackground());
-        anime.setOriginal(dto.getOriginal());
-        anime.setDirector(dto.getDirector());
-        anime.setWriter(dto.getWriter());
-        anime.setEpisodes(dto.getEpisodes());
-        anime.setAirDate(dto.getAirDate());
-        anime.setAirWeekday(dto.getAirWeekday());
-        anime.setProduction(dto.getProduction());
-        anime.setSynopsis(dto.getSynopsis());
-        anime.setContent(dto.getContent());
-        anime.setStoryboard(dto.getStoryboard());
-        anime.setPerformance(dto.getPerformance());
-        anime.setMusic(dto.getMusic());
-        anime.setCharaOriginal(dto.getCharaOriginal());
-        anime.setCharaDesign(dto.getCharaDesign());
-        anime.setSeriesComposition(dto.getSeriesComposition());
-        anime.setArtDirector(dto.getArtDirector());
-        anime.setColorDesign(dto.getColorDesign());
-        anime.setChiefAnimationDirector(dto.getChiefAnimationDirector());
-        anime.setAnimationDirector(dto.getAnimationDirector());
-        anime.setPhotographyDirector(dto.getPhotographyDirector());
-        anime.setPlanning(dto.getPlanning());
-        anime.setAlias(dto.getAlias());
-        anime.setQuote(dto.getQuote());
+        BeanUtils.copyProperties(dto, anime);
         return anime;
     }
 
+    /**
+     * 实体 -> VO 转换。
+     * 约定：同名字段由 BeanUtils 自动拷贝（含 viewCount/createTime/background）。
+     * 新增字段请保持实体与 VO 同名，否则需在此手动 set。
+     */
     private AnimeVO toVO(Anime anime) {
         AnimeVO vo = new AnimeVO();
-        vo.setId(anime.getId());
-        vo.setTitle(anime.getTitle());
-        vo.setTitleJp(anime.getTitleJp());
-        vo.setCategory(anime.getCategory());
-        vo.setCover(anime.getCover());
-        vo.setBackground(anime.getBackground());
-        vo.setOriginal(anime.getOriginal());
-        vo.setDirector(anime.getDirector());
-        vo.setWriter(anime.getWriter());
-        vo.setEpisodes(anime.getEpisodes());
-        vo.setAirDate(anime.getAirDate());
-        vo.setAirWeekday(anime.getAirWeekday());
-        vo.setProduction(anime.getProduction());
-        vo.setSynopsis(anime.getSynopsis());
-        vo.setContent(anime.getContent());
-        vo.setStoryboard(anime.getStoryboard());
-        vo.setPerformance(anime.getPerformance());
-        vo.setMusic(anime.getMusic());
-        vo.setCharaOriginal(anime.getCharaOriginal());
-        vo.setCharaDesign(anime.getCharaDesign());
-        vo.setSeriesComposition(anime.getSeriesComposition());
-        vo.setArtDirector(anime.getArtDirector());
-        vo.setColorDesign(anime.getColorDesign());
-        vo.setChiefAnimationDirector(anime.getChiefAnimationDirector());
-        vo.setAnimationDirector(anime.getAnimationDirector());
-        vo.setPhotographyDirector(anime.getPhotographyDirector());
-        vo.setPlanning(anime.getPlanning());
-        vo.setAlias(anime.getAlias());
-        vo.setQuote(anime.getQuote());
-        vo.setViewCount(anime.getViewCount());
-        vo.setCreateTime(anime.getCreateTime());
+        BeanUtils.copyProperties(anime, vo);
         return vo;
     }
 }

@@ -3,7 +3,7 @@
     <el-avatar :size="34" class="r-avatar">{{ reply.username?.[0] || 'U' }}</el-avatar>
     <div class="r-body">
       <div class="r-head">
-        <span class="r-name">{{ reply.username }}</span>
+        <span class="r-name" title="查看主页" @click="$emit('author')">{{ reply.username }}</span>
         <span class="text-muted">{{ reply.createTime }}</span>
         <span v-if="canDelete" class="r-del" @click="$emit('remove')">删除</span>
       </div>
@@ -19,7 +19,7 @@ import { useUserStore } from '@/stores/user'
 const props = defineProps({
   reply: { type: Object, required: true },
 })
-defineEmits(['remove'])
+defineEmits(['remove', 'author'])
 
 const store = useUserStore()
 const canDelete = computed(() => {
@@ -54,6 +54,7 @@ const canDelete = computed(() => {
   font-weight: 600;
   color: var(--primary);
   font-size: 14px;
+  cursor: pointer;
 }
 .r-del {
   margin-left: auto;

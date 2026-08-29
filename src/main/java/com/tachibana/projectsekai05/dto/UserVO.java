@@ -2,6 +2,7 @@ package com.tachibana.projectsekai05.dto;
 
 import com.tachibana.projectsekai05.entity.SysUser;
 import lombok.Data;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +18,12 @@ public class UserVO {
 
     private String nickname;
 
+    /** 个人简介 */
+    private String bio;
+
+    /** 头像URL */
+    private String avatar;
+
     /** 角色: USER / ADMIN / SUPER_ADMIN */
     private String role;
 
@@ -24,14 +31,13 @@ public class UserVO {
 
     private LocalDateTime createTime;
 
+    /**
+     * 用户实体 -> 登录出参 VO 转换（脱敏，不含密码）。
+     * 约定：同名字段由 BeanUtils 自动拷贝；新增字段请保持实体与 VO 同名，否则需在此手动 set。
+     */
     public static UserVO from(SysUser user) {
         UserVO vo = new UserVO();
-        vo.setId(user.getId());
-        vo.setUsername(user.getUsername());
-        vo.setNickname(user.getNickname());
-        vo.setRole(user.getRole());
-        vo.setStatus(user.getStatus());
-        vo.setCreateTime(user.getCreateTime());
+        BeanUtils.copyProperties(user, vo);
         return vo;
     }
 }

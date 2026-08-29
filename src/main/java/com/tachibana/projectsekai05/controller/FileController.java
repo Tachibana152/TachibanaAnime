@@ -26,9 +26,10 @@ public class FileController {
         this.fileService = fileService;
     }
 
-    @Operation(summary = "上传文件", description = "需登录，返回 {url: '/uploads/xxx.jpg'}")
+    @Operation(summary = "上传文件", description = "需登录，返回 {url: '/uploads/xxx.jpg'}。type=avatar 时限制 1MB 存入 /uploads/avatar/")
     @PostMapping("/upload")
-    public R<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
-        return R.success(fileService.upload(file));
+    public R<Map<String, String>> upload(@RequestParam("file") MultipartFile file,
+                                         @RequestParam(value = "type", required = false) String type) {
+        return R.success(fileService.upload(file, type));
     }
 }

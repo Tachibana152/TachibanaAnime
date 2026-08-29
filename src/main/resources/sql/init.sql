@@ -18,6 +18,9 @@ CREATE TABLE sys_user
     username    VARCHAR(50)  NOT NULL COMMENT '用户名',
     password    VARCHAR(128) NOT NULL COMMENT '密码(SHA-256(salt+password))',
     nickname    VARCHAR(50)           DEFAULT NULL COMMENT '昵称',
+    bio         VARCHAR(255)          DEFAULT NULL COMMENT '个人简介',
+    avatar      VARCHAR(255)          DEFAULT NULL COMMENT '当前头像URL',
+    avatar_pending VARCHAR(255)       DEFAULT NULL COMMENT '待审核头像URL(超管审核通过后转正)',
     role        VARCHAR(20)  NOT NULL DEFAULT 'USER' COMMENT '角色: USER/ADMIN/SUPER_ADMIN',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态: 1正常 0禁用',
     deleted     TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0未删 1已删',
@@ -28,13 +31,13 @@ CREATE TABLE sys_user
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
 -- 演示账号: 密码均为 123456 (SHA-256(salt+password))
-INSERT INTO sys_user (id, username, password, nickname, role, status, create_time)
-VALUES (1, 'admin', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '管理员', 'SUPER_ADMIN', 1, '2026-01-01 10:00:00'),
-       (2, 'test', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '测试用户', 'USER', 1, '2026-01-02 11:00:00'),
-       (3, 'tachibana', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', 'Tachibana站长', 'ADMIN', 1, '2026-01-03 09:30:00'),
-       (4, 'user01', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '追番萌新', 'USER', 1, '2026-02-10 20:15:00'),
-       (5, 'user02', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '老婆党', 'USER', 1, '2026-03-05 14:40:00'),
-       (6, 'user03', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '禁止摆烂', 'USER', 0, '2026-04-18 08:22:00');
+INSERT INTO sys_user (id, username, password, nickname, bio, avatar, role, status, create_time)
+VALUES (1, 'admin', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '管理员', 'Tachibana 动画世界的站长，负责站点运营与用户管理。', '/uploads/avatar/default.webp', 'SUPER_ADMIN', 1, '2026-01-01 10:00:00'),
+       (2, 'test', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '测试用户', '一个热爱动画的测试账号。', '/uploads/avatar/default.webp', 'USER', 1, '2026-01-02 11:00:00'),
+       (3, 'tachibana', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', 'Tachibana站长', '番组信息维护者，日常更新动漫条目。', '/uploads/avatar/default.webp', 'ADMIN', 1, '2026-01-03 09:30:00'),
+       (4, 'user01', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '追番萌新', '刚入坑的萌新，正在疯狂补番中。', '/uploads/avatar/default.webp', 'USER', 1, '2026-02-10 20:15:00'),
+       (5, 'user02', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '老婆党', '专注纸片人老婆一百年。', '/uploads/avatar/default.webp', 'USER', 1, '2026-03-05 14:40:00'),
+       (6, 'user03', 'd4c4d76050f7aa79b0cae44a8cb961cb781ea6e271e83cd70e0f76f5fea0b340', '禁止摆烂', '已禁用账号，用于演示。', '/uploads/avatar/default.webp', 'USER', 0, '2026-04-18 08:22:00');
 
 -- =============================================================
 -- 2. 动漫表 anime
@@ -427,6 +430,43 @@ SET storyboard    = '新房昭之(NC)、芦野芳晴(1,2,3)、笹木信作(4,6,1
     synopsis      = '大好きな家族がいて、親友がいて、時には笑い、時には泣く、そんなどこにでもある日常。\n見滝原中学校に通う、普通の中学二年生・鹿目まどかも、そんな日常の中で暮らす一人。\nある日、彼女に不思議な出会いが訪れる。\nこの出会いは偶然なのか、必然なのか、彼女はまだ知らない。\nそれは、彼女の運命を変えてしまうような出会い――\nそれは、新たなる魔法少女物語の始まり――\n\n\n出生良好家庭，亲朋好友团聚，时哭时笑，这是谁都拥有的日常生活。\n市立见泷原中学的平凡初二女生鹿目圆，就是其中一位。\n一天，一个不可思议的人出现在她眼前。\n不知是偶然抑或注定，可以肯定的是，这相遇改变了她的命运，一个新的魔法少女故事亦随即开始。',
     content       = '故事围绕着5位魔法少女依次登场而展开。出生于良好家庭，亲朋好友团聚，有哭有笑，是谁都拥有的日常生活。就读市立见泷原中学二年级的少女鹿目圆就是如此平凡地过着幸福的每一天。而一名神秘转学生晓美焰的出现，让圆的命运开始改变。\n\n鹿目圆和朋友在回家的途中发现焰竟然手持武器，猎杀一只伤痕累累，名为丘比的神秘生物。风波过后，丘比希望少女们和自己签订契约，成为"魔法少女"来保护人类。随着憧憬破灭于残酷的现实，鹿目圆的想法也受到魔法少女黑暗真相的无情冲击……'
 WHERE id = 19;
+
+-- =============================================================
+-- 2.5 动漫内容贡献者表 anime_contributor
+--    一个动漫可有多个内容贡献者，用户主页统计其贡献过的动漫
+-- =============================================================
+DROP TABLE IF EXISTS anime_contributor;
+CREATE TABLE anime_contributor
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    anime_id    BIGINT      NOT NULL COMMENT '动漫ID',
+    user_id     BIGINT      NOT NULL COMMENT '贡献者用户ID',
+    create_time DATETIME             DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_anime_user (anime_id, user_id),
+    KEY idx_user_id (user_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='动漫内容贡献者表';
+
+-- 种子数据：经典动画由 admin(1)/tachibana(3) 贡献
+INSERT INTO anime_contributor (anime_id, user_id, create_time)
+VALUES (11, 1, '2026-01-01 00:00:00'),
+       (11, 3, '2026-01-02 00:00:00'),
+       (12, 3, '2026-01-03 00:00:00'),
+       (13, 3, '2026-01-04 00:00:00'),
+       (14, 3, '2026-01-05 00:00:00'),
+       (15, 3, '2026-01-06 00:00:00'),
+       (16, 3, '2026-01-07 00:00:00'),
+       (17, 1, '2026-01-08 00:00:00'),
+       (18, 3, '2026-01-09 00:00:00'),
+       (19, 3, '2026-01-10 00:00:00'),
+       (1, 1, '2026-01-11 00:00:00'),
+       (2, 1, '2026-01-12 00:00:00'),
+       (3, 1, '2026-01-13 00:00:00'),
+       (4, 1, '2026-01-14 00:00:00'),
+       (5, 1, '2026-01-15 00:00:00'),
+       (6, 1, '2026-01-16 00:00:00'),
+       (7, 1, '2026-01-17 00:00:00'),
+       (8, 1, '2026-01-18 00:00:00');
 
 -- =============================================================
 -- 3. 论坛帖子表 forum_post

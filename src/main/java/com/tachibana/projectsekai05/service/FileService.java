@@ -13,7 +13,8 @@ public interface FileService {
      * 上传文件，返回可访问的 URL
      *
      * @param file 上传的文件
+     * @param type 用途类型：avatar（1MB 限制，存 uploads/avatar/）或 null（默认 10MB）
      * @return 形如 {url: "/uploads/xxx.jpg"}
      */
-    Map<String, String> upload(MultipartFile file);
+    Map<String, String> upload(MultipartFile file, String type);
 }

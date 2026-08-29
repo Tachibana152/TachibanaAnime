@@ -6,6 +6,7 @@ import com.tachibana.projectsekai05.common.result.R;
 import com.tachibana.projectsekai05.dto.AnimeDTO;
 import com.tachibana.projectsekai05.dto.AnimeQueryDTO;
 import com.tachibana.projectsekai05.dto.AnimeVO;
+import com.tachibana.projectsekai05.dto.UserBriefVO;
 import com.tachibana.projectsekai05.security.NoAuth;
 import com.tachibana.projectsekai05.security.RequireRole;
 import com.tachibana.projectsekai05.service.AnimeService;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 动漫接口
@@ -47,6 +50,13 @@ public class AnimeController {
     @GetMapping("/{id}")
     public R<AnimeVO> detail(@PathVariable Long id) {
         return R.success(animeService.detail(id));
+    }
+
+    @NoAuth
+    @Operation(summary = "动漫内容贡献者列表", description = "该动漫的所有内容贡献者")
+    @GetMapping("/{id}/contributors")
+    public R<List<UserBriefVO>> contributors(@PathVariable Long id) {
+        return R.success(animeService.listContributors(id));
     }
 
     @RequireRole({SecurityConstants.ROLE_ADMIN, SecurityConstants.ROLE_SUPER_ADMIN})

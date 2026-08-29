@@ -1,4 +1,4 @@
-# Tachibana 动画世界 · 前端
+# Tachibana Anime · 前端
 
 动漫资讯 + 论坛的前端项目，基于 **Vue 3 + Vite + Vue Router + Pinia + Axios + Element Plus**。
 

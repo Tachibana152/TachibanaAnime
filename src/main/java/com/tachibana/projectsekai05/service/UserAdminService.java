@@ -6,6 +6,8 @@ import com.tachibana.projectsekai05.dto.UserQueryDTO;
 import com.tachibana.projectsekai05.dto.UserRoleDTO;
 import com.tachibana.projectsekai05.dto.UserStatusDTO;
 
+import java.util.List;
+
 /**
  * 用户管理服务（超级管理员）
  */
@@ -30,4 +32,14 @@ public interface UserAdminService {
      * 删除用户
      */
     void delete(Long id);
+
+    /**
+     * 待审核头像列表（avatar_pending 非空）
+     */
+    List<UserInfoVO> listAvatarAudits();
+
+    /**
+     * 头像审核：通过（转正）或驳回（仅清除待审），刷新 Redis 缓存
+     */
+    void reviewAvatar(Long userId, boolean approve);
 }

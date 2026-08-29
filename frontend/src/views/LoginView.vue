@@ -3,7 +3,7 @@
     <div class="login-card card">
       <div class="brand" @click="router.push('/home')">
         <el-icon :size="28" color="#2aa3ff"><Film /></el-icon>
-        <span>Tachibana 动画世界</span>
+        <span>Tachibana Anime</span>
       </div>
       <el-tabs v-model="mode" stretch>
         <el-tab-pane label="登录" name="login" />

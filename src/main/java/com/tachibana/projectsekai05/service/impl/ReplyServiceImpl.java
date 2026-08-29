@@ -20,6 +20,7 @@ import com.tachibana.projectsekai05.mapper.ForumReplyMapper;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.ReplyService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -98,14 +99,15 @@ public class ReplyServiceImpl implements ReplyService {
         return SecurityConstants.ROLE_ADMIN.equals(role) || SecurityConstants.ROLE_SUPER_ADMIN.equals(role);
     }
 
+    /**
+     * 回复实体 -> VO 转换。
+     * 约定：同名字段由 BeanUtils 自动拷贝；username 为派生字段（关联用户表查询昵称），需手动填充。
+     * 新增字段请保持实体与 VO 同名，否则需在此手动 set。
+     */
     private ReplyVO toVO(ForumReply reply) {
         ReplyVO vo = new ReplyVO();
-        vo.setId(reply.getId());
-        vo.setPostId(reply.getPostId());
-        vo.setUserId(reply.getUserId());
+        BeanUtils.copyProperties(reply, vo);
         vo.setUsername(displayName(reply.getUserId()));
-        vo.setContent(reply.getContent());
-        vo.setCreateTime(reply.getCreateTime());
         return vo;
     }
 

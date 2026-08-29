@@ -17,7 +17,7 @@
 
     <div v-loading="loading" class="mt-16">
       <div v-if="list.length" class="post-list">
-        <PostCard v-for="p in list" :key="p.id" :post="p" @open="router.push(`/post/${p.id}`)" />
+        <PostCard v-for="p in list" :key="p.id" :post="p" @open="router.push(`/post/${p.id}`)" @author="(p) => router.push(`/user/${p.userId}`)" />
       </div>
       <el-empty v-else :description="keyword ? '未找到相关帖子' : '暂无帖子'" />
     </div>

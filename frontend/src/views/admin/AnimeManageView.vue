@@ -105,6 +105,18 @@
             <el-input v-model="form.background" placeholder="详情页大图背景，选填；留空则用封面作背景" style="flex: 1" />
           </div>
         </el-form-item>
+        <el-form-item label="内容贡献">
+          <el-select
+            v-model="form.contributorIds"
+            multiple
+            filterable
+            placeholder="选择内容贡献者（可多选）"
+            style="width: 100%"
+            :loading="contributorLoading"
+          >
+            <el-option v-for="u in admins" :key="u.id" :label="`${u.nickname || u.username}（@${u.username}）`" :value="u.id" />
+          </el-select>
+        </el-form-item>
         <div class="form-row">
           <el-form-item label="原作">
             <el-input v-model="form.original" />
@@ -211,9 +223,11 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { animeApi } from '@/api/anime'
-import { fileApi } from '@/api/user'
+import { fileApi, userApi } from '@/api/user'
+import { useUserStore } from '@/stores/user'
 import RichToolbar from '@/components/RichToolbar.vue'
 
+const store = useUserStore()
 const list = ref([])
 const total = ref(0)
 const pageNum = ref(1)
@@ -222,6 +236,8 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const saving = ref(false)
 const query = reactive({ category: '', keyword: '' })
+const admins = ref([])
+const contributorLoading = ref(false)
 
 const emptyForm = () => ({
   id: null, title: '', titleJp: '', category: 'NEW', cover: '', background: '',
@@ -229,7 +245,7 @@ const emptyForm = () => ({
   storyboard: '', performance: '', music: '', charaOriginal: '', charaDesign: '',
   seriesComposition: '', artDirector: '', colorDesign: '', chiefAnimationDirector: '',
   animationDirector: '', photographyDirector: '', planning: '', alias: '', quote: '',
-  synopsis: '', content: '',
+  synopsis: '', content: '', contributorIds: [],
 })
 const form = reactive(emptyForm())
 
@@ -256,9 +272,32 @@ function onSearch() {
   load()
 }
 
-function openDialog(row) {
+async function openDialog(row) {
   Object.assign(form, row ? { ...row } : emptyForm())
+  if (row) {
+    // 编辑：回显已有贡献者
+    contributorLoading.value = true
+    try {
+      const list = await animeApi.contributors(row.id)
+      form.contributorIds = (list || []).map((u) => u.id)
+    } catch (e) {
+      ElMessage.error(e.message)
+    } finally {
+      contributorLoading.value = false
+    }
+  } else {
+    // 新增：默认勾选当前管理员
+    form.contributorIds = store.user?.id ? [store.user.id] : []
+  }
   dialogVisible.value = true
+}
+
+async function loadAdmins() {
+  try {
+    admins.value = await userApi.listAdmins()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
 }
 
 async function uploadCover(option) {
@@ -342,7 +381,10 @@ async function onDelete(row) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadAdmins()
+})
 </script>
 
 <style scoped>

@@ -16,10 +16,12 @@ import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.UserAdminService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -90,5 +92,33 @@ public class UserAdminServiceImpl implements UserAdminService {
         sysUserMapper.deleteById(id);
         redisTemplate.delete(RedisConstants.TOKEN_PREFIX + id);
         redisTemplate.delete(RedisConstants.USER_LOGIN_PREFIX + id);
+    }
+
+    @Override
+    public List<UserInfoVO> listAvatarAudits() {
+        return sysUserMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                        .isNotNull(SysUser::getAvatarPending)
+                        .ne(SysUser::getAvatarPending, "")
+                        .orderByDesc(SysUser::getUpdateTime))
+                .stream().map(UserInfoVO::from).toList();
+    }
+
+    @Override
+    public void reviewAvatar(Long userId, boolean approve) {
+        SysUser sysUser = sysUserMapper.selectById(userId);
+        if (sysUser == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND);
+        }
+        if (!StringUtils.hasText(sysUser.getAvatarPending())) {
+            throw new BusinessException(400, "该用户没有待审核的头像");
+        }
+        if (approve) {
+            sysUser.setAvatar(sysUser.getAvatarPending());
+        }
+        sysUser.setAvatarPending("");
+        sysUser.setUpdateTime(LocalDateTime.now());
+        sysUserMapper.updateById(sysUser);
+        redisTemplate.opsForValue().set(RedisConstants.USER_LOGIN_PREFIX + userId, UserVO.from(sysUser),
+                RedisConstants.DEFAULT_EXPIRE, TimeUnit.SECONDS);
     }
 }

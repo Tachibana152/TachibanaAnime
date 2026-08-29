@@ -249,7 +249,7 @@ Authorization: Bearer <token>
 ### 上传文件 `POST /api/files/upload` 【需登录】
 
 - `Content-Type: multipart/form-data`
-- 表单字段：`file`
+- 表单字段：`file`、`type`（可选；`avatar` 时限制 1MB 并存到 `/uploads/avatar/`，默认 10MB）
 
 响应：
 ```json
@@ -302,4 +302,54 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 | `auth.js` | `/api/auth/*` |
 | `anime.js` | `/api/animes/*` |
 | `forum.js` | `/api/forum/posts/*`、`/api/admin/posts/*` |
-| `user.js` | `/api/admin/users/*`、`/api/files/upload` |
+| `user.js` | `/api/admin/users/*`、`/api/files/upload`、`/api/users/*` |
+
+---
+
+## 十一、用户主页 / 设置 / 头像（新增）
+
+### 1. 用户主页 `GET /api/users/{id}` 【公开】
+
+返回 `UserProfileVO {id, username, nickname, bio, avatar, role, status, createTime, postCount, animeCount}`。
+
+### 2. 该用户已发布的帖子 `GET /api/users/{id}/posts` 【公开】
+
+参数同帖子分页（`pageNum/pageSize`），仅已发布，置顶优先 + 时间倒序。
+
+### 3. 该用户贡献过的动漫 `GET /api/users/{id}/animes` 【公开】
+
+参数同动漫分页（`pageNum/pageSize/category/keyword`），返回该用户作为内容贡献者的动漫。
+
+### 4. 管理员列表 `GET /api/users/admins` 【ADMIN / SUPER_ADMIN】
+
+返回 `[{id, username, nickname, avatar}]`，动漫内容贡献者下拉选项。
+
+### 5. 修改个人资料 `PUT /api/auth/profile` 【需登录】
+
+```json
+{ "nickname": "追番萌新", "bio": "热爱动画的追番人" }
+```
+成功返回最新 `UserInfoVO`（含 `bio/avatar/avatarPending`）。
+
+### 6. 提交头像 `PUT /api/auth/avatar` 【需登录】
+
+```json
+{ "avatarUrl": "/uploads/avatar/xxx.webp" }
+```
+写入 `avatar_pending` 待超级管理员审核，返回当前用户信息。
+
+### 7. 待审核头像列表 `GET /api/admin/users/avatar-audits` 【SUPER_ADMIN】
+
+返回 `avatar_pending` 非空的用户列表。
+
+### 8. 头像审核 `PUT /api/admin/users/avatar-audits/{id}` 【SUPER_ADMIN】
+
+```json
+{ "approve": true }
+```
+`approve=true` 转正（`avatar=avatar_pending`）；`false` 驳回（仅清除待审）。
+
+### 9. 动漫内容贡献者
+
+- `GET /api/animes/{id}/contributors` 【公开】：返回贡献者列表 `[{id, username, nickname, avatar}]`
+- 新增/更新动漫（`POST/PUT /api/animes`）请求体可带 `contributorIds: [1,3]`；保存时自动合并当前操作人

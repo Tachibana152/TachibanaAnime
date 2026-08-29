@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="hero card">
       <div class="hero-text">
-        <h1>Tachibana 动画世界</h1>
+        <h1>Tachibana Anime</h1>
         <p>最新的动画资讯、经典动画推荐与精彩评论。无论你是新番追逐者还是老番爱好者，这里都有丰富的内容。</p>
         <div class="search-box">
           <el-input

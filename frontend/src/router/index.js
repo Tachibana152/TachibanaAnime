@@ -53,6 +53,18 @@ const routes = [
         meta: { title: '我的帖子', requiresAuth: true },
       },
       {
+        path: 'user/:id',
+        name: 'userProfile',
+        component: () => import('@/views/UserProfileView.vue'),
+        meta: { title: '个人主页', requiresAuth: true },
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/views/UserSettingsView.vue'),
+        meta: { title: '账号设置', requiresAuth: true },
+      },
+      {
         path: 'admin/anime',
         name: 'adminAnime',
         component: () => import('@/views/admin/AnimeManageView.vue'),
@@ -87,7 +99,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} - Tachibana 动画世界` : 'Tachibana 动画世界'
+  document.title = to.meta.title ? `${to.meta.title} - Tachibana Anime` : 'Tachibana Anime'
   const store = useUserStore()
 
   if (to.meta.public) {

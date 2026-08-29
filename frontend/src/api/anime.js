@@ -13,6 +13,9 @@ export const animeApi = {
   detail(id) {
     return USE_MOCK ? mockApi.animeDetail(id) : request.get(`/animes/${id}`)
   },
+  contributors(id) {
+    return USE_MOCK ? mockApi.animeContributors(id) : request.get(`/animes/${id}/contributors`)
+  },
   create(form) {
     return USE_MOCK ? mockApi.createAnime(token(), form) : request.post('/animes', form)
   },

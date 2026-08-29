@@ -4,7 +4,7 @@
       <div class="navbar-inner">
         <div class="brand" @click="router.push('/home')">
           <el-icon :size="26" color="#2aa3ff"><Film /></el-icon>
-          <span class="brand-text">Tachibana 动画世界</span>
+          <span class="brand-text">Tachibana Anime</span>
         </div>
 
         <nav class="nav-menu">
@@ -33,13 +33,17 @@
             <el-tag :type="roleTagType" size="small" effect="light">{{ roleLabel }}</el-tag>
             <el-dropdown trigger="click">
               <span class="user-entry">
-                <el-avatar :size="30" class="avatar">{{ store.user?.nickname?.[0] || 'U' }}</el-avatar>
+                <el-avatar :size="30" :src="avatarUrl(store.user)" class="avatar">
+                  <template #error>{{ store.user?.nickname?.[0] || 'U' }}</template>
+                </el-avatar>
                 <span class="username">{{ store.user?.nickname || store.user?.username }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item @click="router.push(`/user/${store.user?.id}`)">个人主页</el-dropdown-item>
                   <el-dropdown-item @click="router.push('/myposts')">我的帖子</el-dropdown-item>
+                  <el-dropdown-item @click="router.push('/settings')">账号设置</el-dropdown-item>
                   <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -68,6 +72,7 @@ import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { ROLE, ROLE_LABEL } from '@/constants'
+import { avatarUrl } from '@/utils/avatar'
 
 const router = useRouter()
 const store = useUserStore()

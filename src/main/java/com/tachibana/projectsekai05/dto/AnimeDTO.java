@@ -97,4 +97,7 @@ public class AnimeDTO implements Serializable {
 
     @Schema(description = "语录")
     private String quote;
+
+    @Schema(description = "内容贡献者ID列表（选填；保存时会合并当前操作人）")
+    private java.util.List<Long> contributorIds;
 }

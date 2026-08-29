@@ -8,6 +8,12 @@
       <div class="detail-card">
         <p class="page-title">{{ anime.title }}<span v-if="anime.titleJp" class="title-jp"> - {{ anime.titleJp }}</span></p>
         <p class="view-stats text-muted"><el-icon><View /></el-icon> {{ anime.viewCount }} 次浏览</p>
+        <p v-if="contributors.length" class="contrib-row text-muted">
+          <el-icon><UserFilled /></el-icon> 内容贡献：
+          <span v-for="c in contributors" :key="c.id" class="contrib" @click="router.push(`/user/${c.id}`)">
+            {{ c.nickname || c.username }}
+          </span>
+        </p>
         <div class="twotop"></div>
 
         <div class="detail-body">
@@ -75,6 +81,7 @@ const route = useRoute()
 const router = useRouter()
 const anime = ref(null)
 const loading = ref(false)
+const contributors = ref([])
 
 function hl(text) {
   return highlightText(text || '', route.query.keyword || '')
@@ -84,6 +91,11 @@ async function load() {
   loading.value = true
   try {
     anime.value = await animeApi.detail(route.params.id)
+    try {
+      contributors.value = (await animeApi.contributors(route.params.id)) || []
+    } catch {
+      contributors.value = []
+    }
   } catch (e) {
     ElMessage.error(e.message)
   } finally {
@@ -137,6 +149,22 @@ onMounted(load)
   align-items: center;
   gap: 5px;
   font-size: 13px;
+}
+.contrib-row {
+  margin: 6px 28px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+}
+.contrib {
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+.contrib:hover {
+  text-decoration: underline;
 }
 .twotop {
   margin-top: 14px;

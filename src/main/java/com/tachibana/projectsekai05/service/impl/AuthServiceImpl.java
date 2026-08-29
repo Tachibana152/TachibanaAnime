@@ -11,15 +11,18 @@ import com.tachibana.projectsekai05.dto.LoginDTO;
 import com.tachibana.projectsekai05.dto.LoginVO;
 import com.tachibana.projectsekai05.dto.RegisterDTO;
 import com.tachibana.projectsekai05.dto.UserInfoVO;
+import com.tachibana.projectsekai05.dto.UserProfileDTO;
 import com.tachibana.projectsekai05.dto.UserVO;
 import com.tachibana.projectsekai05.entity.SysUser;
 import com.tachibana.projectsekai05.mapper.SysUserMapper;
 import com.tachibana.projectsekai05.security.UserContext;
 import com.tachibana.projectsekai05.service.AuthService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -131,12 +134,67 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(401, "账号已被禁用");
         }
         UserInfoVO vo = new UserInfoVO();
-        vo.setId(sysUser.getId());
-        vo.setUsername(sysUser.getUsername());
-        vo.setNickname(sysUser.getNickname());
-        vo.setRole(sysUser.getRole());
-        vo.setStatus(sysUser.getStatus());
-        vo.setCreateTime(sysUser.getCreateTime());
+        BeanUtils.copyProperties(sysUser, vo);
         return vo;
+    }
+
+    @Override
+    public UserInfoVO updateProfile(UserProfileDTO dto) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        if (dto.getNickname() != null) {
+            String nickname = dto.getNickname().trim();
+            if (nickname.isEmpty()) {
+                throw new BusinessException(400, "昵称不能为空");
+            }
+            user.setNickname(nickname);
+        }
+        if (dto.getBio() != null) {
+            user.setBio(dto.getBio().trim());
+        }
+        user.setUpdateTime(LocalDateTime.now());
+        sysUserMapper.updateById(user);
+        refreshLoginCache(user);
+
+        UserInfoVO vo = new UserInfoVO();
+        BeanUtils.copyProperties(user, vo);
+        return vo;
+    }
+
+    @Override
+    public UserInfoVO submitAvatar(String avatarUrl) {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        if (!StringUtils.hasText(avatarUrl)) {
+            throw new BusinessException(400, "头像不能为空");
+        }
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        user.setAvatarPending(avatarUrl);
+        user.setUpdateTime(LocalDateTime.now());
+        sysUserMapper.updateById(user);
+        refreshLoginCache(user);
+
+        UserInfoVO vo = new UserInfoVO();
+        BeanUtils.copyProperties(user, vo);
+        return vo;
+    }
+
+    /**
+     * 刷新 Redis 登录缓存（login:user:{id}），使昵称/头像/角色即时生效
+     */
+    private void refreshLoginCache(SysUser user) {
+        redisTemplate.opsForValue().set(RedisConstants.USER_LOGIN_PREFIX + user.getId(), UserVO.from(user),
+                RedisConstants.DEFAULT_EXPIRE, TimeUnit.SECONDS);
     }
     }
