@@ -297,12 +297,20 @@ export const posts = [
 ]
 
 export const replies = [
-  { id: 1, postId: 1, userId: 2, username: 'test', content: '冰菓真的值得多刷，每次看都有新感受！', createTime: '2026-01-06 08:00:00' },
-  { id: 2, postId: 1, userId: 3, username: 'tachibana', content: '京阿尼的演出和米泽的推理确实是绝配。', createTime: '2026-01-06 10:20:00' },
-  { id: 3, postId: 1, userId: 4, username: 'user01', content: '补番清单+1，今晚就去看。', createTime: '2026-01-07 21:40:00' },
-  { id: 4, postId: 2, userId: 2, username: 'test', content: '有道理，但我觉得小火的作品质量也很高，不能一概而论。', createTime: '2026-01-11 09:00:00' },
-  { id: 5, postId: 2, userId: 1, username: 'admin', content: '讨论度也是作品生命力的一部分嘛。', createTime: '2026-01-11 13:30:00' },
-  { id: 6, postId: 3, userId: 1, username: 'admin', content: '这季度确实经费拉满，制作没得挑。', createTime: '2026-02-02 11:00:00' },
+  { id: 1, postId: 1, userId: 2, username: 'test', content: '冰菓真的值得多刷，每次看都有新感受！', likeCount: 3, likedUsers: [1, 3, 4], createTime: '2026-01-06 08:00:00' },
+  { id: 2, postId: 1, userId: 3, username: 'tachibana', content: '京阿尼的演出和米泽的推理确实是绝配。', likeCount: 5, likedUsers: [1, 2, 4, 5, 6], createTime: '2026-01-06 10:20:00' },
+  { id: 3, postId: 1, userId: 4, username: 'user01', content: '补番清单+1，今晚就去看。', likeCount: 1, likedUsers: [1], createTime: '2026-01-07 21:40:00' },
+  { id: 4, postId: 2, userId: 2, username: 'test', content: '有道理，但我觉得小火的作品质量也很高，不能一概而论。', likeCount: 2, likedUsers: [1, 5], createTime: '2026-01-11 09:00:00' },
+  { id: 5, postId: 2, userId: 1, username: 'admin', content: '讨论度也是作品生命力的一部分嘛。', likeCount: 4, likedUsers: [2, 3, 4, 6], createTime: '2026-01-11 13:30:00' },
+  { id: 6, postId: 3, userId: 1, username: 'admin', content: '这季度确实经费拉满，制作没得挑。', likeCount: 0, likedUsers: [], createTime: '2026-02-02 11:00:00' },
+]
+
+export const animeComments = [
+  { id: 1, animeId: 11, userId: 2, username: 'test', content: 'CLANNAD 的渚线看得我眼泪止不住，京阿尼永远的神。', likeCount: 12, likedUsers: [1, 3, 4, 5, 6], createTime: '2026-02-01 20:00:00' },
+  { id: 2, animeId: 11, userId: 4, username: 'user01', content: '团子大家族一响就绷不住了。', likeCount: 8, likedUsers: [1, 3, 5], createTime: '2026-02-02 21:30:00' },
+  { id: 3, animeId: 13, userId: 3, username: 'tachibana', content: 'EVA 的意识和宗教符号，N刷都看不腻。', likeCount: 6, likedUsers: [1, 4], createTime: '2026-02-03 10:15:00' },
+  { id: 4, animeId: 14, userId: 5, username: 'user02', content: '石头门前期慢热，后半直接封神。', likeCount: 9, likedUsers: [1, 2, 3], createTime: '2026-02-04 12:40:00' },
+  { id: 5, animeId: 19, userId: 2, username: 'test', content: '和我签订契约，成为魔法少女吧！第三话直接起飞。', likeCount: 15, likedUsers: [1, 4, 5], createTime: '2026-02-05 18:20:00' },
 ]
 
 // ==================== 工具 ====================

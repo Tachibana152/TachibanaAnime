@@ -353,3 +353,27 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 
 - `GET /api/animes/{id}/contributors` 【公开】：返回贡献者列表 `[{id, username, nickname, avatar}]`
 - 新增/更新动漫（`POST/PUT /api/animes`）请求体可带 `contributorIds: [1,3]`；保存时自动合并当前操作人
+
+---
+
+## 十二、评论与点赞（新增）
+
+### 1. 动漫评论 `GET /api/animes/{id}/comments` 【公开】
+
+分页参数 `pageNum/pageSize`，**时间倒序**（最新在前）。响应 `PageResult<AnimeCommentVO>`：
+`{id, animeId, userId, username, content, likeCount, liked, createTime}`。
+
+### 2. 发表动漫评论 `POST /api/animes/{id}/comments` 【需登录】
+
+```json
+{ "content": "这部番真的很好看！" }
+```
+
+### 3. 删除动漫评论 `DELETE /api/animes/comments/{id}` 【作者本人 / ADMIN+】
+
+### 4. 点赞 / 取消点赞（全站评论通用，toggle）
+
+- 帖子回复：`POST /api/forum/posts/replies/{id}/like` 【需登录】
+- 动漫评论：`POST /api/animes/comments/{id}/like` 【需登录】
+
+响应最新评论信息（`likeCount` 增减、`liked` 为当前用户是否已赞）。点赞去重由 `comment_like` 表唯一键保证（再点取消）。

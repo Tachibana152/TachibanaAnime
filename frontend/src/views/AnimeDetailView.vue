@@ -64,6 +64,54 @@
           </div>
         </div>
       </div>
+
+      <!-- 评论区（页面最底端） -->
+      <div class="comment-section card">
+        <h3 class="comment-title">
+          <el-icon><ChatDotRound /></el-icon> 评论（{{ commentTotal }}）
+        </h3>
+
+        <div v-if="store.isLoggedIn" class="comment-box">
+          <el-input
+            v-model="commentContent"
+            type="textarea"
+            :rows="3"
+            maxlength="500"
+            show-word-limit
+            placeholder="说说你对这部作品的看法…"
+          />
+          <div class="comment-actions">
+            <el-button type="primary" :loading="commenting" @click="submitComment">发表评论</el-button>
+          </div>
+        </div>
+        <el-empty v-else description="登录后参与评论" :image-size="80">
+          <el-button type="primary" round @click="router.push(`/login?redirect=${route.fullPath}`)">去登录</el-button>
+        </el-empty>
+
+        <div v-loading="commentLoading" class="comment-list">
+          <ReplyItem
+            v-for="c in comments"
+            :key="c.id"
+            :reply="c"
+            @remove="onDeleteComment(c)"
+            @author="() => router.push(`/user/${c.userId}`)"
+            @like="onLikeComment(c)"
+          />
+          <el-empty v-if="!commentLoading && !comments.length" description="还没有评论，快来抢沙发" :image-size="70" />
+        </div>
+
+        <div v-if="commentTotal > commentPageSize" class="pager">
+          <el-pagination
+            v-model:current-page="commentPage"
+            :page-size="commentPageSize"
+            :total="commentTotal"
+            layout="total, prev, pager, next"
+            background
+            small
+            @current-change="loadComments"
+          />
+        </div>
+      </div>
     </template>
     <el-empty v-else-if="!loading" description="动画不存在或已下架" />
   </div>
@@ -72,16 +120,28 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { animeApi } from '@/api/anime'
 import { highlightText } from '@/utils/highlight'
 import { renderRich } from '@/utils/rich'
+import { useUserStore } from '@/stores/user'
+import ReplyItem from '@/components/ReplyItem.vue'
 
 const route = useRoute()
 const router = useRouter()
+const store = useUserStore()
 const anime = ref(null)
 const loading = ref(false)
 const contributors = ref([])
+
+// 评论区
+const comments = ref([])
+const commentTotal = ref(0)
+const commentPage = ref(1)
+const commentPageSize = ref(10)
+const commentLoading = ref(false)
+const commentContent = ref('')
+const commenting = ref(false)
 
 function hl(text) {
   return highlightText(text || '', route.query.keyword || '')
@@ -96,10 +156,65 @@ async function load() {
     } catch {
       contributors.value = []
     }
+    commentPage.value = 1
+    loadComments()
   } catch (e) {
     ElMessage.error(e.message)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadComments() {
+  commentLoading.value = true
+  try {
+    const data = await animeApi.listComments(route.params.id, { pageNum: commentPage.value, pageSize: commentPageSize.value })
+    comments.value = data.records || []
+    commentTotal.value = data.total || 0
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    commentLoading.value = false
+  }
+}
+
+async function submitComment() {
+  if (!commentContent.value.trim()) return ElMessage.warning('请输入评论内容')
+  commenting.value = true
+  try {
+    await animeApi.createComment(route.params.id, { content: commentContent.value.trim() })
+    commentContent.value = ''
+    ElMessage.success('评论成功')
+    commentPage.value = 1
+    loadComments()
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    commenting.value = false
+  }
+}
+
+async function onDeleteComment(c) {
+  await ElMessageBox.confirm('确定删除这条评论吗？', '提示', { type: 'warning' })
+  try {
+    await animeApi.deleteComment(c.id)
+    ElMessage.success('已删除')
+    loadComments()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function onLikeComment(c) {
+  if (!store.isLoggedIn) {
+    ElMessage.warning('请先登录再点赞')
+    return router.push(`/login?redirect=${route.fullPath}`)
+  }
+  try {
+    const updated = await animeApi.toggleCommentLike(c.id)
+    Object.assign(c, updated)
+  } catch (e) {
+    ElMessage.error(e.message)
   }
 }
 
@@ -257,6 +372,32 @@ onMounted(load)
   font-style: italic;
   background: rgba(255, 255, 255, 0.35);
   border-radius: 6px;
+}
+.comment-section {
+  margin-top: 20px;
+  padding: 22px 28px;
+}
+.comment-title {
+  margin: 0 0 16px;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.comment-box {
+  margin-bottom: 16px;
+}
+.comment-actions {
+  margin-top: 10px;
+  text-align: right;
+}
+.comment-list {
+  min-height: 60px;
+}
+.pager {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
 }
 .qmark {
   position: absolute;

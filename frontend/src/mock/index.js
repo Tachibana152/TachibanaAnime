@@ -3,7 +3,7 @@
 // 所有函数返回 Promise，成功 resolve 数据，失败 reject {code,message}
 // =============================================================
 import {
-  users, animes, posts, replies,
+  users, animes, posts, replies, animeComments,
   nextId, paginate, nowStr, buildToken,
   ok, fail, findUserByToken,
 } from './db.js'
@@ -283,8 +283,10 @@ export const mockApi = {
   // ================= 回复 =================
   async listReplies(postId, { pageNum = 1, pageSize = 10 } = {}) {
     await delay()
+    const me = findUserByToken(localStorage.getItem('tb_token') || '')
     let list = replies.filter((r) => r.postId === Number(postId))
     list = [...list].sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+    list = list.map((r) => ({ ...r, liked: me ? (r.likedUsers || []).includes(me.id) : false }))
     return ok(paginate(list, pageNum, pageSize))
   },
   async createReply(token, postId, { content }) {
@@ -292,10 +294,28 @@ export const mockApi = {
     const user = requireAuth(token)
     const p = posts.find((x) => x.id === Number(postId))
     if (!p) return fail(404, '帖子不存在')
-    const r = { id: nextId('reply'), postId: Number(postId), userId: user.id, username: user.nickname || user.username, content, createTime: nowStr() }
+    const r = { id: nextId('reply'), postId: Number(postId), userId: user.id, username: user.nickname || user.username, content, likeCount: 0, likedUsers: [], liked: false, createTime: nowStr() }
     replies.push(r)
     p.replyCount += 1
     return ok(r)
+  },
+  async toggleReplyLike(token, id) {
+    await delay()
+    const user = requireAuth(token)
+    const r = replies.find((x) => x.id === Number(id))
+    if (!r) return fail(404, '回复不存在')
+    r.likedUsers = r.likedUsers || []
+    const idx = r.likedUsers.indexOf(user.id)
+    if (idx >= 0) {
+      r.likedUsers.splice(idx, 1)
+      r.likeCount = Math.max(0, (r.likeCount || 1) - 1)
+      r.liked = false
+    } else {
+      r.likedUsers.push(user.id)
+      r.likeCount = (r.likeCount || 0) + 1
+      r.liked = true
+    }
+    return ok({ ...r })
   },
   async deleteReply(token, id) {
     await delay()
@@ -308,6 +328,52 @@ export const mockApi = {
     const p = posts.find((x) => x.id === r.postId)
     if (p) p.replyCount = Math.max(0, p.replyCount - 1)
     return ok(null)
+  },
+
+  // ================= 动漫评论 =================
+  async listAnimeComments(animeId, { pageNum = 1, pageSize = 10 } = {}) {
+    await delay()
+    const me = findUserByToken(localStorage.getItem('tb_token') || '')
+    let list = animeComments.filter((c) => c.animeId === Number(animeId))
+    list = [...list].sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+    list = list.map((c) => ({ ...c, liked: me ? (c.likedUsers || []).includes(me.id) : false }))
+    return ok(paginate(list, pageNum, pageSize))
+  },
+  async createAnimeComment(token, animeId, { content }) {
+    await delay()
+    const user = requireAuth(token)
+    if (!animes.some((x) => x.id === Number(animeId))) return fail(404, '动画不存在')
+    const c = { id: nextId('reply') + 1000, animeId: Number(animeId), userId: user.id, username: user.nickname || user.username, content, likeCount: 0, likedUsers: [], liked: false, createTime: nowStr() }
+    animeComments.unshift(c)
+    return ok(c)
+  },
+  async deleteAnimeComment(token, id) {
+    await delay()
+    const user = requireAuth(token)
+    const idx = animeComments.findIndex((c) => c.id === Number(id))
+    if (idx < 0) return fail(404, '评论不存在')
+    const c = animeComments[idx]
+    if (c.userId !== user.id && user.role === ROLE.USER) return fail(403, '没有权限删除该评论')
+    animeComments.splice(idx, 1)
+    return ok(null)
+  },
+  async toggleAnimeCommentLike(token, id) {
+    await delay()
+    const user = requireAuth(token)
+    const c = animeComments.find((x) => x.id === Number(id))
+    if (!c) return fail(404, '评论不存在')
+    c.likedUsers = c.likedUsers || []
+    const idx = c.likedUsers.indexOf(user.id)
+    if (idx >= 0) {
+      c.likedUsers.splice(idx, 1)
+      c.likeCount = Math.max(0, (c.likeCount || 1) - 1)
+      c.liked = false
+    } else {
+      c.likedUsers.push(user.id)
+      c.likeCount = (c.likeCount || 0) + 1
+      c.liked = true
+    }
+    return ok({ ...c })
   },
 
   // ================= 用户管理 =================

@@ -50,4 +50,7 @@ export const forumApi = {
   deleteReply(id) {
     return USE_MOCK ? mockApi.deleteReply(token(), id) : request.delete(`/forum/posts/replies/${id}`)
   },
+  toggleReplyLike(id) {
+    return USE_MOCK ? mockApi.toggleReplyLike(token(), id) : request.post(`/forum/posts/replies/${id}/like`)
+  },
 }

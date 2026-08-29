@@ -24,4 +24,9 @@ public interface ReplyService {
      * 删除回复（作者本人或管理员）
      */
     void delete(Long id);
+
+    /**
+     * 点赞/取消点赞（toggle），返回最新回复信息（含 likeCount/liked）
+     */
+    ReplyVO toggleLike(Long id);
 }

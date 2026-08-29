@@ -7,25 +7,25 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 回复出参
+ * 动漫评论出参
  */
 @Data
-@Schema(description = "回复")
-public class ReplyVO implements Serializable {
+@Schema(description = "动漫评论")
+public class AnimeCommentVO implements Serializable {
 
-    @Schema(description = "回复ID")
+    @Schema(description = "评论ID")
     private Long id;
 
-    @Schema(description = "帖子ID")
-    private Long postId;
+    @Schema(description = "动漫ID")
+    private Long animeId;
 
-    @Schema(description = "回复人ID")
+    @Schema(description = "评论人ID")
     private Long userId;
 
-    @Schema(description = "回复人昵称")
+    @Schema(description = "评论人昵称")
     private String username;
 
-    @Schema(description = "回复内容")
+    @Schema(description = "评论内容")
     private String content;
 
     @Schema(description = "点赞数")

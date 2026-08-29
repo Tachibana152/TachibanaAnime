@@ -534,6 +534,7 @@ CREATE TABLE forum_reply
     post_id     BIGINT        NOT NULL COMMENT '帖子ID',
     user_id     BIGINT        NOT NULL COMMENT '回复人ID',
     content     VARCHAR(1000) NOT NULL COMMENT '回复内容',
+    like_count  INT           NOT NULL DEFAULT 0 COMMENT '点赞数',
     deleted     TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0未删 1已删',
     create_time DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -543,10 +544,89 @@ CREATE TABLE forum_reply
   DEFAULT CHARSET = utf8mb4 COMMENT ='回复表';
 
 -- 种子数据（与前端 Mock db.js 一致，ID 对齐）
-INSERT INTO forum_reply (id, post_id, user_id, content, create_time)
-VALUES (1, 1, 2, '冰菓真的值得多刷，每次看都有新感受！', '2026-01-06 08:00:00'),
-       (2, 1, 3, '京阿尼的演出和米泽的推理确实是绝配。', '2026-01-06 10:20:00'),
-       (3, 1, 4, '补番清单+1，今晚就去看。', '2026-01-07 21:40:00'),
-       (4, 2, 2, '有道理，但我觉得小火的作品质量也很高，不能一概而论。', '2026-01-11 09:00:00'),
-       (5, 2, 1, '讨论度也是作品生命力的一部分嘛。', '2026-01-11 13:30:00'),
-       (6, 3, 1, '这季度确实经费拉满，制作没得挑。', '2026-02-02 11:00:00');
+INSERT INTO forum_reply (id, post_id, user_id, content, like_count, create_time)
+VALUES (1, 1, 2, '冰菓真的值得多刷，每次看都有新感受！', 3, '2026-01-06 08:00:00'),
+       (2, 1, 3, '京阿尼的演出和米泽的推理确实是绝配。', 5, '2026-01-06 10:20:00'),
+       (3, 1, 4, '补番清单+1，今晚就去看。', 1, '2026-01-07 21:40:00'),
+       (4, 2, 2, '有道理，但我觉得小火的作品质量也很高，不能一概而论。', 2, '2026-01-11 09:00:00'),
+       (5, 2, 1, '讨论度也是作品生命力的一部分嘛。', 4, '2026-01-11 13:30:00'),
+       (6, 3, 1, '这季度确实经费拉满，制作没得挑。', 0, '2026-02-02 11:00:00');
+
+-- =============================================================
+-- 4.5 动漫评论表 anime_comment
+--    展示于动漫详情页底部，时间倒序
+-- =============================================================
+DROP TABLE IF EXISTS anime_comment;
+CREATE TABLE anime_comment
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    anime_id    BIGINT        NOT NULL COMMENT '动漫ID',
+    user_id     BIGINT        NOT NULL COMMENT '评论人ID',
+    content     VARCHAR(1000) NOT NULL COMMENT '评论内容',
+    like_count  INT           NOT NULL DEFAULT 0 COMMENT '点赞数',
+    deleted     TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0未删 1已删',
+    create_time DATETIME               DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    KEY idx_anime_id (anime_id),
+    KEY idx_user_id (user_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='动漫评论表';
+
+-- 种子数据（CLANNAD/EVA 等经典作品示例评论）
+INSERT INTO anime_comment (id, anime_id, user_id, content, like_count, create_time)
+VALUES (1, 11, 2, 'CLANNAD 的渚线看得我眼泪止不住，京阿尼永远的神。', 12, '2026-02-01 20:00:00'),
+       (2, 11, 4, '团子大家族一响就绷不住了。', 8, '2026-02-02 21:30:00'),
+       (3, 13, 3, 'EVA 的意识和宗教符号，N刷都看不腻。', 6, '2026-02-03 10:15:00'),
+       (4, 14, 5, '石头门前期慢热，后半直接封神。', 9, '2026-02-04 12:40:00'),
+       (5, 19, 2, '和我签订契约，成为魔法少女吧！第三话直接起飞。', 15, '2026-02-05 18:20:00');
+
+-- =============================================================
+-- 4.6 评论点赞表 comment_like（全站评论点赞去重）
+--    target_type: 1=论坛回复(forum_reply) 2=动漫评论(anime_comment)
+-- =============================================================
+DROP TABLE IF EXISTS comment_like;
+CREATE TABLE comment_like
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    target_type TINYINT     NOT NULL COMMENT '评论类型: 1=论坛回复 2=动漫评论',
+    target_id   BIGINT      NOT NULL COMMENT '评论ID',
+    user_id     BIGINT      NOT NULL COMMENT '点赞用户ID',
+    create_time DATETIME             DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_target_user (target_type, target_id, user_id),
+    KEY idx_user_id (user_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='评论点赞表';
+
+-- 种子点赞（与上方点赞数对应）
+INSERT INTO comment_like (target_type, target_id, user_id, create_time)
+VALUES (1, 1, 1, '2026-01-07 09:00:00'),
+       (1, 1, 3, '2026-01-07 09:05:00'),
+       (1, 1, 4, '2026-01-07 09:10:00'),
+       (1, 2, 1, '2026-01-08 10:00:00'),
+       (1, 2, 2, '2026-01-08 10:30:00'),
+       (1, 2, 4, '2026-01-08 11:00:00'),
+       (1, 2, 5, '2026-01-08 11:30:00'),
+       (1, 2, 6, '2026-01-08 12:00:00'),
+       (1, 3, 1, '2026-01-09 08:00:00'),
+       (1, 4, 1, '2026-01-12 09:00:00'),
+       (1, 4, 5, '2026-01-12 09:30:00'),
+       (1, 5, 2, '2026-01-12 10:00:00'),
+       (1, 5, 3, '2026-01-12 10:30:00'),
+       (1, 5, 4, '2026-01-12 11:00:00'),
+       (1, 5, 6, '2026-01-12 11:30:00'),
+       (2, 1, 1, '2026-02-02 09:00:00'),
+       (2, 1, 3, '2026-02-02 09:30:00'),
+       (2, 1, 4, '2026-02-02 10:00:00'),
+       (2, 1, 5, '2026-02-02 10:30:00'),
+       (2, 1, 6, '2026-02-02 11:00:00'),
+       (2, 2, 1, '2026-02-03 08:00:00'),
+       (2, 2, 3, '2026-02-03 08:30:00'),
+       (2, 2, 5, '2026-02-03 09:00:00'),
+       (2, 3, 1, '2026-02-04 09:00:00'),
+       (2, 3, 4, '2026-02-04 09:30:00'),
+       (2, 4, 1, '2026-02-05 09:00:00'),
+       (2, 4, 2, '2026-02-05 09:30:00'),
+       (2, 4, 3, '2026-02-05 10:00:00'),
+       (2, 5, 1, '2026-02-06 09:00:00'),
+       (2, 5, 4, '2026-02-06 09:30:00'),
+       (2, 5, 5, '2026-02-06 10:00:00');

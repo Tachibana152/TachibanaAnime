@@ -8,6 +8,12 @@
         <span v-if="canDelete" class="r-del" @click="$emit('remove')">删除</span>
       </div>
       <p class="r-content rich-text">{{ reply.content }}</p>
+      <div class="r-actions">
+        <span class="like-btn" :class="{ liked: reply.liked }" title="点赞" @click="$emit('like')">
+          <el-icon><Pointer /></el-icon>
+          <span>{{ reply.likeCount || 0 }}</span>
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -19,7 +25,7 @@ import { useUserStore } from '@/stores/user'
 const props = defineProps({
   reply: { type: Object, required: true },
 })
-defineEmits(['remove', 'author'])
+defineEmits(['remove', 'author', 'like'])
 
 const store = useUserStore()
 const canDelete = computed(() => {
@@ -67,5 +73,31 @@ const canDelete = computed(() => {
 }
 .r-content {
   margin: 6px 0 0;
+}
+.r-actions {
+  margin-top: 6px;
+}
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  user-select: none;
+}
+.like-btn:hover {
+  color: var(--primary);
+  background: rgba(42, 163, 255, 0.1);
+}
+.like-btn.liked {
+  color: var(--primary);
+  font-weight: 600;
+}
+.like-btn.liked :deep(.el-icon) {
+  color: var(--primary);
 }
 </style>

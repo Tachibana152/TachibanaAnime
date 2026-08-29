@@ -107,4 +107,10 @@ public class ForumPostController {
         replyService.delete(id);
         return R.success();
     }
+
+    @Operation(summary = "回复点赞/取消点赞", description = "需登录，toggle")
+    @PostMapping("/replies/{id}/like")
+    public R<ReplyVO> toggleReplyLike(@PathVariable Long id) {
+        return R.success(replyService.toggleLike(id));
+    }
 }

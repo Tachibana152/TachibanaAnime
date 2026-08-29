@@ -5,20 +5,20 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 论坛回复
+ * 动漫评论
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("forum_reply")
-public class ForumReply extends BaseEntity {
+@TableName("anime_comment")
+public class AnimeComment extends BaseEntity {
 
-    /** 帖子ID */
-    private Long postId;
+    /** 动漫ID */
+    private Long animeId;
 
-    /** 回复人ID */
+    /** 评论人ID */
     private Long userId;
 
-    /** 回复内容 */
+    /** 评论内容 */
     private String content;
 
     /** 点赞数 */

@@ -62,6 +62,7 @@
             :reply="r"
             @remove="onDeleteReply(r)"
             @author="() => router.push(`/user/${r.userId}`)"
+            @like="onLikeReply(r)"
           />
           <el-empty v-if="!replyLoading && !replies.length" description="还没有回复，快来抢沙发" :image-size="70" />
         </div>
@@ -157,6 +158,19 @@ async function onDeleteReply(r) {
     ElMessage.success('已删除')
     if (post.value) post.value.replyCount = Math.max(0, post.value.replyCount - 1)
     loadReplies()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function onLikeReply(r) {
+  if (!store.isLoggedIn) {
+    ElMessage.warning('请先登录再点赞')
+    return router.push(`/login?redirect=${route.fullPath}`)
+  }
+  try {
+    const updated = await forumApi.toggleReplyLike(r.id)
+    Object.assign(r, updated)
   } catch (e) {
     ElMessage.error(e.message)
   }
