@@ -48,9 +48,8 @@
             <div class="content1 rich-body" v-html="renderRich(anime.synopsis, route.query.keyword)"></div>
 
             <div class="quote-box" v-if="anime.quote">
-              <span class="qmark qmark-l">"</span>
-              <span class="qmark qmark-r">"</span>
-              <div class="quote-title">{{ anime.title }}</div>
+              <span class="qmark qmark-l">「</span>
+              <span class="qmark qmark-r">」</span>
               <p class="quote-line">{{ anime.quote }}</p>
             </div>
 
@@ -245,10 +244,6 @@ onMounted(load)
 .qmark-r {
   top: -6px;
   right: 8px;
-}
-.quote-title {
-  font-size: 22px;
-  color: rgba(0, 0, 0, 0.8);
 }
 .quote-line {
   margin: 12px 0 0;

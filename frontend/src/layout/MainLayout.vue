@@ -57,8 +57,7 @@
     </main>
 
     <footer class="footer">
-      <p>Tachibana 动画世界 · 番组查询 · 课程设计演示</p>
-      <p class="text-muted">基于 Vue3 + Element Plus，后端 Spring Boot</p>
+      <p>站长Tachibana制作</p>
     </footer>
   </div>
 </template>
