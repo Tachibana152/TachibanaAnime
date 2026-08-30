@@ -1,0 +1,26 @@
+[Unit]
+Description=ProjectSekai-05 Spring Boot Application
+After=network.target mysqld.service redis-server.service
+Wants=mysqld.service redis-server.service
+
+[Service]
+Type=simple
+User=projectsekai
+Group=projectsekai
+WorkingDirectory=/opt/projectsekai
+Environment=SPRING_PROFILES_ACTIVE=prod
+Environment=DB_URL=jdbc:mysql://127.0.0.1:3306/animeairi?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+Environment=DB_USERNAME=animeairi
+Environment=DB_PASSWORD=CHANGE_ME
+Environment=REDIS_HOST=127.0.0.1
+Environment=REDIS_PORT=6379
+Environment=REDIS_PASSWORD=
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /opt/projectsekai/app.jar
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=projectsekai
+
+[Install]
+WantedBy=multi-user.target
