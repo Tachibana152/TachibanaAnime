@@ -1,14 +1,10 @@
 package com.tachibana.projectsekai05.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -22,7 +18,7 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        GenericJackson2JsonRedisSerializer jsonSerializer = jsonSerializer();
+        GenericJacksonJsonRedisSerializer jsonSerializer = jsonSerializer();
         template.setKeySerializer(stringSerializer);
         template.setHashKeySerializer(stringSerializer);
         template.setValueSerializer(jsonSerializer);
@@ -32,13 +28,11 @@ public class RedisConfig {
     }
 
     /**
-     * JSON 序列化器：注册 JavaTimeModule（LocalDateTime 等）并开启默认类型信息（支持反序列化为具体类型）
+     * JSON 序列化器：基于 Jackson 3，开启默认类型信息（支持反序列化为具体类型；LocalDateTime 等 java.time 类型原生支持）
      */
-    private GenericJackson2JsonRedisSerializer jsonSerializer() {
-        ObjectMapper om = new ObjectMapper();
-        om.registerModule(new JavaTimeModule());
-        om.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-        return new GenericJackson2JsonRedisSerializer(om);
+    private GenericJacksonJsonRedisSerializer jsonSerializer() {
+        return GenericJacksonJsonRedisSerializer.builder()
+                .enableUnsafeDefaultTyping()
+                .build();
     }
 }
