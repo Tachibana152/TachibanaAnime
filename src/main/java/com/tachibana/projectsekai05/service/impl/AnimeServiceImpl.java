@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tachibana.projectsekai05.common.constant.RedisConstants;
 import com.tachibana.projectsekai05.common.enums.ResultCode;
 import com.tachibana.projectsekai05.common.exception.BusinessException;
+import com.tachibana.projectsekai05.AIService.rag.AnimeRagIndexer;
 import com.tachibana.projectsekai05.common.result.PageResult;
 import com.tachibana.projectsekai05.dto.AnimeDTO;
 import com.tachibana.projectsekai05.dto.AnimeQueryDTO;
@@ -40,13 +41,16 @@ public class AnimeServiceImpl implements AnimeService {
     private final AnimeContributorMapper animeContributorMapper;
     private final SysUserMapper sysUserMapper;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AnimeRagIndexer animeRagIndexer;
 
     public AnimeServiceImpl(AnimeMapper animeMapper, AnimeContributorMapper animeContributorMapper,
-                            SysUserMapper sysUserMapper, RedisTemplate<String, Object> redisTemplate) {
+                            SysUserMapper sysUserMapper, RedisTemplate<String, Object> redisTemplate,
+                            AnimeRagIndexer animeRagIndexer) {
         this.animeMapper = animeMapper;
         this.animeContributorMapper = animeContributorMapper;
         this.sysUserMapper = sysUserMapper;
         this.redisTemplate = redisTemplate;
+        this.animeRagIndexer = animeRagIndexer;
     }
 
     @Override
@@ -109,6 +113,8 @@ public class AnimeServiceImpl implements AnimeService {
         if (!ids.isEmpty()) {
             syncContributors(anime.getId(), ids);
         }
+        // 提交动漫信息到向量库，加入 RAG 知识库
+        animeRagIndexer.indexAnime(anime);
         return toVO(anime);
     }
 
@@ -125,6 +131,8 @@ public class AnimeServiceImpl implements AnimeService {
         // 内容贡献者：当前操作人 ∪ DTO 指定列表（先删后插，保证所有编辑过的人都计入）
         syncContributors(id, mergeContributorIds(dto.getContributorIds()));
         redisTemplate.delete(RedisConstants.CACHE_ANIME_PREFIX + id);
+        // 编辑后刷新向量库中的动漫信息（覆盖旧向量）
+        animeRagIndexer.indexAnime(animeMapper.selectById(id));
         return toVO(animeMapper.selectById(id));
     }
 
@@ -137,6 +145,8 @@ public class AnimeServiceImpl implements AnimeService {
         animeContributorMapper.delete(new LambdaQueryWrapper<AnimeContributor>()
                 .eq(AnimeContributor::getAnimeId, id));
         redisTemplate.delete(RedisConstants.CACHE_ANIME_PREFIX + id);
+        // 从向量库移除该动漫的向量，避免删除后仍被 RAG 检索到
+        animeRagIndexer.removeAnime(id);
     }
 
     @Override
