@@ -1,16 +1,15 @@
 package com.tachibana.projectsekai05.AIService.config;
 
+import com.tachibana.projectsekai05.AIService.rag.RagIndexUtil;
 import dev.langchain4j.community.store.embedding.redis.RedisEmbeddingStore;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
@@ -27,16 +26,19 @@ import java.util.List;
 /**
  * Easy RAG 配置
  * <p>
- * 把知识文档放入 {@code easy-rag.document-path} 指定的目录（支持 .txt/.md/.pdf/.docx 等）。
- * 应用启动后自动加载、切分，并用 bge-small-en-v1.5 嵌入模型（本地 ONNX 运行）向量化，
- * 存入 Redis 向量库 {@link RedisEmbeddingStore}。
+ * 知识库包含两类来源，共用同一个 Redis 向量库（索引 {@code embedding-index}）：
+ * <ol>
+ *   <li><b>文档库</b>：{@code easy-rag.document-path} 目录下的知识文档，启动时经 {@link RagIndexUtil}
+ *       以确定性前缀 {@code doc:{文件名}} 覆盖写入；</li>
+ *   <li><b>动漫库</b>：动漫新增/编辑时由 {@code AnimeRagIndexer} 以 {@code anime:{id}} 前缀写入，删除时清理。</li>
+ * </ol>
  * <p>
  * <strong>注意：</strong>{@link RedisEmbeddingStore} 依赖 Redis 服务端的
  * <b>RediSearch</b> 与 <b>RedisJSON</b> 两个模块（可用 {@code redis/redis-stack-server} 镜像），
  * 否则启动时执行 {@code FT.LIST}/{@code FT.CREATE}/{@code JSON.SET} 会报错。
  * <p>
  * 随后注册 {@link ContentRetriever}，由 langchain4j-spring-boot4-starter 自动注入到
- * {@code @AiService} 的 Assistant 中——用户提问时会先检索相关文档内容再交给 LLM 回答。
+ * {@code @AiService} 的 Assistant 中——用户提问时会先检索相关文档/动漫内容再交给 LLM 回答。
  */
 @Configuration
 @Slf4j
@@ -64,23 +66,31 @@ public class RagConfig {
     }
 
     /**
-     * Redis 向量库：构造时若索引不存在会立即执行 {@code FT.LIST}/{@code FT.CREATE}。
+     * 向量库专用 Jedis 客户端，向量库与索引清理共用。
      */
     @Bean
-    public EmbeddingStore<TextSegment> embeddingStore(
+    public UnifiedJedis easyRagJedis(
             @Value("${easy-rag.redis.host:localhost}") String host,
             @Value("${easy-rag.redis.port:6379}") int port,
-            @Value("${easy-rag.redis.password:}") String password,
-            @Value("${easy-rag.redis.index-name:embedding-index}") String indexName) {
+            @Value("${easy-rag.redis.password:}") String password) {
         DefaultJedisClientConfig.Builder jedisConfigBuilder = DefaultJedisClientConfig.builder()
                 .connectionTimeoutMillis(REDIS_TIMEOUT_MILLIS)
                 .socketTimeoutMillis(REDIS_TIMEOUT_MILLIS);
         if (password != null && !password.isBlank()) {
             jedisConfigBuilder.password(password);
         }
-        UnifiedJedis jedis = new UnifiedJedis(new HostAndPort(host, port), jedisConfigBuilder.build());
+        return new UnifiedJedis(new HostAndPort(host, port), jedisConfigBuilder.build());
+    }
+
+    /**
+     * Redis 向量库：构造时若索引不存在会立即执行 {@code FT.LIST}/{@code FT.CREATE}。
+     */
+    @Bean
+    public EmbeddingStore<TextSegment> embeddingStore(
+            UnifiedJedis easyRagJedis,
+            @Value("${easy-rag.redis.index-name:embedding-index}") String indexName) {
         return RedisEmbeddingStore.builder()
-                .unifiedJedis(jedis)
+                .unifiedJedis(easyRagJedis)
                 .indexName(indexName)
                 .prefix("embedding:")
                 .dimension(EMBEDDING_DIMENSION)
@@ -97,23 +107,15 @@ public class RagConfig {
                 .build();
     }
 
-    @Bean
-    public EmbeddingStoreIngestor embeddingStoreIngestor(EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
-        return EmbeddingStoreIngestor.builder()
-                .embeddingStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .documentSplitter(DocumentSplitters.recursive(500, 100))
-                .build();
-    }
-
     /**
      * 启动后加载并向量化知识文档。
-     * 幂等处理：入库前先清空旧向量，避免重复启动累积重复数据。
+     * <p>
+     * 每个文档用确定性前缀 {@code doc:{文件名}} 覆盖写入（JSON.SET 覆盖，重启不重复），
+     * 不全局清库——避免清掉运行时由 {@code AnimeRagIndexer} 写入的动漫向量。
      */
     @Bean
     public ApplicationRunner easyRagIngestor(
-            EmbeddingStore<TextSegment> embeddingStore,
-            EmbeddingStoreIngestor ingestor,
+            RagIndexUtil ragIndexUtil,
             @Value("${easy-rag.document-path:./rag-docs}") String documentPath) {
         return args -> {
             Path path = Path.of(documentPath);
@@ -133,11 +135,23 @@ public class RagConfig {
                 return;
             }
 
-            log.info("Easy RAG 清空旧向量并重新加载 {} 个文档，开始向量化（存入 Redis）...", documents.size());
             long start = System.currentTimeMillis();
-            embeddingStore.removeAll();
-            ingestor.ingest(documents);
-            log.info("Easy RAG 向量化完成，耗时 {} ms", System.currentTimeMillis() - start);
+            for (Document document : documents) {
+                ragIndexUtil.indexDocument(document, docIdPrefix(document), true);
+            }
+            log.info("Easy RAG 向量化完成 {} 个文档，耗时 {} ms", documents.size(), System.currentTimeMillis() - start);
         };
+    }
+
+    private String docIdPrefix(Document document) {
+        String name = document.metadata().getString(Document.FILE_NAME);
+        if (name == null || name.isBlank()) {
+            return "doc:" + Integer.toHexString(document.text().hashCode());
+        }
+        int dot = name.lastIndexOf('.');
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
+        return "doc:" + name.replaceAll("[^a-zA-Z0-9_-]", "_");
     }
 }
