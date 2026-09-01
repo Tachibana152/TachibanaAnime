@@ -15,7 +15,11 @@
     <description>ProjectSekai-05</description>
     <url/>
     <licenses>
-        <license/>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
     <developers>
         <developer/>
