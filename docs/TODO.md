@@ -73,7 +73,7 @@
   - `POST /api/ai/chat/stream`（`text/event-stream`）→ `SseEmitter`，订阅 `TokenStream.onPartialResponse/onCompleteResponse/onError`，`start()` 后台推送
   - 鉴权：不标 `@NoAuth`，由 `AuthInterceptor` 自动拦截（需登录）
 - [ ] **动画编辑覆盖实测**：`update` 后向量覆盖逻辑已就绪，未跑编辑场景验证
-- [ ] **`docs/api.md` 补 AI 接口文档**：/api/ai/chat、/api/ai/chat/stream 契约 + SSE 格式
+- [x] **`docs/api.md` 补 AI 接口文档**：/api/ai/chat、/api/ai/chat/stream 契约 + SSE 格式
 
 ### 前端
 - [ ] `frontend/src/api/ai.js`：`chat()` 走 axios；`chatStream()` 用 `fetch`（带 `Authorization`）POST + `ReadableStream` 按 `data:` 拆帧回调 `onToken/onDone/onError`
