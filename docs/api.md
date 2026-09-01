@@ -1,8 +1,9 @@
 # Tachibana 动画世界 · 后端接口文档
 
-> 项目：ProjectSekai-05（Spring Boot 4 + MyBatis-Plus + JWT）
+> 项目：ProjectSekai-05（Spring Boot 4 + MyBatis-Plus + JWT + langchain4j）
 > 在线文档（springdoc）：`http://localhost:8080/swagger-ui.html` / OpenAPI JSON：`http://localhost:8080/v3/api-docs`
-> 说明：当前为**接口骨架阶段**，业务逻辑待实现（调用未实现接口返回 500 属预期）。
+> 说明：核心业务逻辑已实现；AI 聊天接口为**已定稿、待实现**（见「十三、AI 智能助手与 RAG 知识库」）。
+> 依赖：需要 Redis 服务端（含 **RediSearch + RedisJSON** 模块）支撑 RAG 向量库与 AI 会话记忆。
 
 ## 一、通用约定
 
@@ -114,6 +115,7 @@ Authorization: Bearer <token>
   "titleJp": "葬送のフリーレン 第2期",
   "category": "NEW",
   "cover": "/uploads/anime/Frieren2nd.jpg",
+  "background": "/uploads/anime/Frieren2nd_bg.jpg",
   "original": "山田鐘人",
   "director": "北川朋哉",
   "writer": "鈴木智尋",
@@ -122,9 +124,27 @@ Authorization: Bearer <token>
   "airWeekday": "星期五",
   "production": "MADHOUSE",
   "synopsis": "简介…",
-  "content": "内容…"
+  "content": "内容…",
+  "storyboard": "分镜…",
+  "performance": "演出…",
+  "music": "音乐…",
+  "charaOriginal": "人物原案…",
+  "charaDesign": "人物设定…",
+  "seriesComposition": "系列构成…",
+  "artDirector": "美术监督…",
+  "colorDesign": "色彩设计…",
+  "chiefAnimationDirector": "总作画监督…",
+  "animationDirector": "作画监督…",
+  "photographyDirector": "摄影监督…",
+  "planning": "企画…",
+  "alias": "别名…",
+  "quote": "语录…",
+  "contributorIds": [1, 3]
 }
 ```
+
+> 除 `title` 外均选填；`background` 为详情页大图背景；`contributorIds` 为内容贡献者 ID 列表（不传则仅并入当前操作人，详见「十一、9」）。
+> **RAG 联动**：新增/编辑成功后，该动漫的全部文本信息（标题/制作阵容/简介/内容/语录等）会自动写入 RAG 向量库（前缀 `anime:{id}`，编辑覆盖旧向量）；删除时清理对应向量。向量库异常不影响动漫 CRUD 主流程（内部捕获并记 WARN）。
 
 ### 4. 更新动漫 `PUT /api/animes/{id}` 【ADMIN / SUPER_ADMIN】
 
@@ -303,6 +323,7 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 | `anime.js` | `/api/animes/*` |
 | `forum.js` | `/api/forum/posts/*`、`/api/admin/posts/*` |
 | `user.js` | `/api/admin/users/*`、`/api/files/upload`、`/api/users/*` |
+| `ai.js`（规划中） | `/api/ai/*`（接口未实现，见第十三章） |
 
 ---
 
@@ -377,3 +398,49 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 - 动漫评论：`POST /api/animes/comments/{id}/like` 【需登录】
 
 响应最新评论信息（`likeCount` 增减、`liked` 为当前用户是否已赞）。点赞去重由 `comment_like` 表唯一键保证（再点取消）。
+
+---
+
+## 十三、AI 智能助手与 RAG 知识库（新增）
+
+> 基于 langchain4j 实现：Redis 会话记忆 + Easy RAG 向量检索 + 动漫内容自动入库。
+> 以下 `/api/ai/*` 两个接口为**已定稿、尚未实现**（详见 `docs/TODO.md`）。
+
+### 1. RAG 知识库机制（内部说明）
+
+- **向量库**：Redis（服务端需 **RediSearch + RedisJSON** 模块），索引 `embedding-index`，key 前缀 `embedding:`。
+- **文档库**：`easy-rag.document-path`（默认 `./rag-docs`）下的知识文档，应用启动时以确定性前缀 `doc:{文件名}` 覆盖写入（重启不重复、不全局清库）。
+- **动漫库**：动漫新增/编辑时由 `AnimeRagIndexer` 以 `anime:{id}` 前缀写入（编辑覆盖旧向量），删除时清理 `anime:{id}:*`。
+- **嵌入模型**：bge-small-en-v1.5 量化版（本地 ONNX 推理，384 维）。
+- **检索参数**：`maxResults=5`、`minScore=0.617`（余弦相似度）。用户提问时先检索相关片段放入上下文，再交由 LLM 回答。
+- **会话记忆**：Redis key `chat:memory:{sessionId}`（JSON），每个会话一个滑动窗口（保留最近 20 条），重启不丢；不同会话相互隔离。
+
+### 2. AI 对话（同步）`POST /api/ai/chat` 【需登录】⚠️ 待实现
+
+请求体 `ChatDTO`：
+```json
+{ "sessionId": "sess-001", "message": "介绍一下葬送的芙莉莲" }
+```
+
+- `sessionId`：会话 ID（可空，为空则按单轮对话处理），同一会话共享上下文记忆。
+- 响应：`data` 为 AI 回复文本（`R<String>`）。
+
+### 3. AI 对话（流式）`POST /api/ai/chat/stream` 【需登录】⚠️ 待实现
+
+- 请求体同上（`ChatDTO`）。
+- 响应：`Content-Type: text/event-stream`（`SseEmitter`），订阅 `TokenStream` 的 `onPartialResponse / onCompleteResponse / onError`，后台推送增量 token。
+
+SSE 帧格式示例：
+```
+data: 葬
+
+data: 送
+
+data: 的
+
+...
+
+data: [DONE]
+```
+
+- 鉴权：未标注 `@NoAuth`，由 `AuthInterceptor` 统一拦截，需携带 `Authorization: Bearer <token>`。
