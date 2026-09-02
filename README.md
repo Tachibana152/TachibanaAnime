@@ -1,4 +1,4 @@
-# ProjectSekai-05 · Tachibana Anime
+# Tachibana Anime
 
 动漫资讯 + 论坛 + AI 智能助手的全栈课程设计项目，前后端分离。
 
