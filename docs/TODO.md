@@ -64,20 +64,22 @@
 
 ## 四、AI 功能（新增，2026-08-31）
 
-> 今日已落地：langchain4j 接入（Boot4 starter / gpt-5.6-luna）、Redis 记忆、Easy RAG、动画自动入向量库。
+> 今日已落地：langchain4j 接入（Boot4 starter / OpenAI 兼容网关，模型 `deepseek-v4-flash`）、Redis 记忆、Easy RAG、动画自动入向量库。
 > 剩余如下（详见 `DEVLOG-2026-08-31.md`）。
 
 ### 后端
-- [ ] **流式聊天接口**（方案已定稿）：`AIService/dto/ChatDTO.java`（sessionId+message，@NotBlank）+ `AIService/service/AIChatService.java`（`chat` / `chatStream`）+ `service/impl/AIChatServiceImpl.java`（委托 `Assistant`）+ `controller/AIChatController.java`
-  - `POST /api/ai/chat` → `R<String>`（同步）
-  - `POST /api/ai/chat/stream`（`text/event-stream`）→ `SseEmitter`，订阅 `TokenStream.onPartialResponse/onCompleteResponse/onError`，`start()` 后台推送
-  - 鉴权：不标 `@NoAuth`，由 `AuthInterceptor` 自动拦截（需登录）
+- [x] **流式聊天接口**（2026-09-02 已实现）：`AIService/dto/ChatDTO.java`（sessionId+message，@NotBlank）+ `AIService/service/AIChatService.java`（`chat` / `chatStream`）+ `service/impl/AIChatServiceImpl.java`（委托 `Assistant`）+ `controller/AIChatController.java`
+  - `POST /api/ai/chat` → `R<String>`（同步）✅
+  - `POST /api/ai/chat/stream`（`text/event-stream`）→ `Flux<String>` ✅（`Assistant.chatStream` 返回 `Flux<String>`，`langchain4j-reactor` 的 `TokenStreamToFluxAdapter` 自动桥接）
+  - 鉴权：不标 `@NoAuth`，由 `AuthInterceptor` 自动拦截（需登录）✅
+  - 排坑（2026-09-02 实测）：`base-url` 多余后缀（如 `/responses`）→ 404；模型名不在网关列表（`gpt-5.6-luna`）→ 500；改用 `https://opencode.ai/zen/go/v1` + `deepseek-v4-flash` 后同步/流式全链路验证通过（SSE `data:` 逐帧 50 token）✅
+  - 流式错误可见化：`AIChatServiceImpl.chatStream` `onErrorResume` 输出 `[error] ...` 帧（`AiErrorUtil` 收敛友好文案）+ `GlobalExceptionHandler` 同步兜底；前端 `ai.js` 识别 `[error]` 帧 + `AbortController` 90s 超时 + 红色错误气泡 ✅
 - [ ] **动画编辑覆盖实测**：`update` 后向量覆盖逻辑已就绪，未跑编辑场景验证
 - [x] **`docs/api.md` 补 AI 接口文档**：/api/ai/chat、/api/ai/chat/stream 契约 + SSE 格式
 
 ### 前端
-- [ ] `frontend/src/api/ai.js`：`chat()` 走 axios；`chatStream()` 用 `fetch`（带 `Authorization`）POST + `ReadableStream` 按 `data:` 拆帧回调 `onToken/onDone/onError`
-- [ ] AI 聊天页（打字机效果，登录框 + 会话 ID，待定是否做）
+- [x] `frontend/src/api/ai.js`：`chat()` 走 axios；`chatStream()` 用 `fetch`（带 `Authorization`）POST + `ReadableStream` 按 `data:` 拆帧回调 `onToken/onDone/onError`（含 Mock 演示打字机）
+- [x] AI 聊天页（打字机效果）：`views/AIChatView.vue` + 路由 `/ai` + 顶栏「AI 助手」入口（需登录），会话 ID 可切换（记忆隔离），回车发送/Shift+Enter 换行
 
 ### 知识库
 - [ ] `rag-docs/` 放入真实知识文档（当前为空，`easyRagIngestor` 启动时按 `doc:{文件名}` 确定性覆盖入库）

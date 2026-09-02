@@ -82,4 +82,11 @@ public class GlobalExceptionHandler {
         log.error("系统异常", e);
         return R.fail(ResultCode.ERROR);
     }
+
+    /** AI 调用异常（langchain4j） */
+    @ExceptionHandler(dev.langchain4j.exception.LangChain4jException.class)
+    public R<Void> handleAiException(dev.langchain4j.exception.LangChain4jException e) {
+        log.error("AI 调用异常", e);
+        return R.fail(ResultCode.ERROR.getCode(), com.tachibana.projectsekai05.AIService.AiErrorUtil.friendly(e));
+    }
 }

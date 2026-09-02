@@ -18,7 +18,7 @@
 - **文件上传**：本地磁盘 + `/uploads/**` 静态映射，10MB 限制，头像 1MB
 
 ### AI 智能助手（langchain4j）
-- **接入模型**：`gpt-5.6-luna`（OpenAI 兼容），支持同步与流式对话
+- **接入模型**：OpenAI 兼容网关（如 `https://opencode.ai/zen/go/v1`，模型 `deepseek-v4-flash`），支持同步与流式对话
 - **会话记忆**：滑动窗口（20 条）+ Redis 持久化，重启不丢
 - **Easy RAG**：bge-small-en-v1.5 本地嵌入 → Redis 向量库；动漫新增/编辑自动入库、删除清理，启动时加载 `rag-docs/` 知识文档
 
@@ -109,16 +109,21 @@ npm run dev                       # → http://localhost:5173
 
 ### 5. 配置 AI 助手（可选）
 
-在 `application-local.yml` 中配置：
+在 `application-local.yml` 中配置（`base-url` 须为 OpenAI 兼容网关根地址，langchain4j 会在其后拼 `/chat/completions`；`model-name` 使用网关支持的模型）：
 
 ```yaml
 langchain4j:
   open-ai:
-    api-key: 你的API密钥
-    model-name: gpt-5.6-luna
-    streaming-chat-model: true
-    max-tokens: 128000
-    temperature: 0.7
+    chat-model:
+      base-url: https://opencode.ai/zen/go/v1   # 去掉 /responses 之类的多余后缀
+      api-key: 你的API密钥
+      model-name: deepseek-v4-flash              # 网关 /v1/models 列表里的模型名
+      max-tokens: 12800
+      temperature: 0.6
+    streaming-chat-model:                        # 流式模型参数与 chat-model 保持一致
+      base-url: https://opencode.ai/zen/go/v1
+      api-key: 你的API密钥
+      model-name: deepseek-v4-flash
 
 easy-rag:
   document-path: ./rag-docs        # 启动时自动向量化入库
@@ -127,6 +132,8 @@ easy-rag:
     port: 6379
     password: "07210721"
 ```
+
+> 排坑：`base-url` 末尾多加路径（如 `/responses`）会 404；模型名不在网关列表会 500。可用 `GET {base-url}/models` 查看可用模型。
 
 ---
 

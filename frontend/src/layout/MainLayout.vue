@@ -12,6 +12,7 @@
           <router-link to="/forum" class="nav-item" active-class="active">论坛</router-link>
           <router-link v-if="store.isLoggedIn" to="/post/edit" class="nav-item" active-class="active">发帖</router-link>
           <router-link v-if="store.isLoggedIn" to="/myposts" class="nav-item" active-class="active">我的帖子</router-link>
+          <router-link v-if="store.isLoggedIn" to="/ai" class="nav-item" active-class="active">AI 助手</router-link>
 
           <el-dropdown v-if="store.isAdmin" trigger="hover" class="admin-drop">
             <span class="nav-item admin-entry">

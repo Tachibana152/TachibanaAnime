@@ -416,6 +416,19 @@ export const mockApi = {
     return ok(null)
   },
 
+  // ================= AI 聊天 =================
+  async chat(token, { sessionId, message }) {
+    await delay(400)
+    requireAuth(token)
+    const msg = String(message || '').trim()
+    if (!msg) return fail(400, '消息不能为空')
+    const topic = animes.find((a) => msg.includes(a.title)) || animes.find((a) => (a.alias || '').includes(msg))
+    if (topic) {
+      return ok(`《${topic.title}》是一部${topic.category === 'CLASSIC' ? '经典动画' : '一月新番'}作品。${topic.synopsis || '暂无简介'}${topic.quote ? ` 语录：「${topic.quote}」` : ''}`)
+    }
+    return ok('我是 Tachibana Anime 的 AI 助手，可以为你介绍站内的动漫作品（如《葬送的芙莉莲》《CLANNAD》）。当前为演示模式，接入真实后端后由大模型回答。')
+  },
+
   // ================= 文件 =================
   async upload(token, file, type) {
     await delay()

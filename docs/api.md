@@ -2,7 +2,7 @@
 
 > 项目：ProjectSekai-05（Spring Boot 4 + MyBatis-Plus + JWT + langchain4j）
 > 在线文档（springdoc）：`http://localhost:8080/swagger-ui.html` / OpenAPI JSON：`http://localhost:8080/v3/api-docs`
-> 说明：核心业务逻辑已实现；AI 聊天接口为**已定稿、待实现**（见「十三、AI 智能助手与 RAG 知识库」）。
+> 说明：核心业务逻辑已实现；AI 聊天接口（同步 + 流式）已实现（见「十三、AI 智能助手与 RAG 知识库」）。
 > 依赖：需要 Redis 服务端（含 **RediSearch + RedisJSON** 模块）支撑 RAG 向量库与 AI 会话记忆。
 
 ## 一、通用约定
@@ -323,7 +323,7 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 | `anime.js` | `/api/animes/*` |
 | `forum.js` | `/api/forum/posts/*`、`/api/admin/posts/*` |
 | `user.js` | `/api/admin/users/*`、`/api/files/upload`、`/api/users/*` |
-| `ai.js`（规划中） | `/api/ai/*`（接口未实现，见第十三章） |
+| `ai.js` | `/api/ai/*`（同步 + 流式，见第十三章） |
 
 ---
 
@@ -404,7 +404,7 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 ## 十三、AI 智能助手与 RAG 知识库（新增）
 
 > 基于 langchain4j 实现：Redis 会话记忆 + Easy RAG 向量检索 + 动漫内容自动入库。
-> 以下 `/api/ai/*` 两个接口为**已定稿、尚未实现**（详见 `docs/TODO.md`）。
+> 两个 `/api/ai/*` 接口已实现（同步 + 流式，流式基于 `Flux<String>` + SSE）。
 
 ### 1. RAG 知识库机制（内部说明）
 
@@ -415,20 +415,21 @@ curl -s -X PUT http://localhost:8080/api/admin/users/4/status -H "Authorization:
 - **检索参数**：`maxResults=5`、`minScore=0.617`（余弦相似度）。用户提问时先检索相关片段放入上下文，再交由 LLM 回答。
 - **会话记忆**：Redis key `chat:memory:{sessionId}`（JSON），每个会话一个滑动窗口（保留最近 20 条），重启不丢；不同会话相互隔离。
 
-### 2. AI 对话（同步）`POST /api/ai/chat` 【需登录】⚠️ 待实现
+### 2. AI 对话（同步）`POST /api/ai/chat` 【需登录】✅ 已实现
 
 请求体 `ChatDTO`：
 ```json
 { "sessionId": "sess-001", "message": "介绍一下葬送的芙莉莲" }
 ```
 
-- `sessionId`：会话 ID（可空，为空则按单轮对话处理），同一会话共享上下文记忆。
+- `sessionId`：会话 ID（`@NotBlank` 必填），同一会话共享上下文记忆。
 - 响应：`data` 为 AI 回复文本（`R<String>`）。
 
-### 3. AI 对话（流式）`POST /api/ai/chat/stream` 【需登录】⚠️ 待实现
+### 3. AI 对话（流式）`POST /api/ai/chat/stream` 【需登录】✅ 已实现
 
 - 请求体同上（`ChatDTO`）。
-- 响应：`Content-Type: text/event-stream`（`SseEmitter`），订阅 `TokenStream` 的 `onPartialResponse / onCompleteResponse / onError`，后台推送增量 token。
+- 响应：`Content-Type: text/event-stream`。
+- 实现：`Assistant.chatStream` 返回 `Flux<String>`（`langchain4j-reactor` 的 `TokenStreamToFluxAdapter` 自动桥接），Controller 直接透传，由 MVC 适配为 SSE 逐帧下发。
 
 SSE 帧格式示例：
 ```
@@ -439,8 +440,7 @@ data: 送
 data: 的
 
 ...
-
-data: [DONE]
 ```
 
+- 流结束：服务端关闭 SSE 连接（`data: [DONE]` 不再额外发送）；前端用 `fetch` + `ReadableStream` 拆 `data:` 帧即可。
 - 鉴权：未标注 `@NoAuth`，由 `AuthInterceptor` 统一拦截，需携带 `Authorization: Bearer <token>`。

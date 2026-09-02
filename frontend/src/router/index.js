@@ -47,6 +47,12 @@ const routes = [
         meta: { title: '编辑帖子', requiresAuth: true },
       },
       {
+        path: 'ai',
+        name: 'aiChat',
+        component: () => import('@/views/AIChatView.vue'),
+        meta: { title: 'AI 助手', requiresAuth: true },
+      },
+      {
         path: 'myposts',
         name: 'myPosts',
         component: () => import('@/views/MyPostsView.vue'),
