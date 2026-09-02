@@ -2,7 +2,7 @@
 
 > 项目：ProjectSekai-05（Tachibana Anime）
 > 记录当前未完成 / 计划中的开发事项，供后续开发与课设报告参考
-> 更新日期：2026-08-31
+> 更新日期：2026-09-02
 
 ---
 
@@ -86,7 +86,35 @@
 
 ---
 
-## 五、其他可选优化（历史遗留）
+## 五、计划功能：RAG 知识库文档管理（仅超管，2026-09-02 定稿）
+
+> 目标：管理员在后台上传知识文档（.md/.txt）直接入库，供 AI 问答检索；当前只能手动放 `rag-docs/` 目录后重启。
+> 权限：仅 `SUPER_ADMIN`（与用户管理同级）。
+
+### 后端
+- [ ] 抽取共享命名：`RagConfig.docIdPrefix`（`doc:{文件名去扩展名}`）改为公共方法，启动入库与上传入库共用，保证覆盖不重复
+- [ ] 新增 `AIService/rag/RagDocService`：
+  - `upload(MultipartFile)`：非空 + 扩展名白名单（.md/.txt）→ 保存到 `easy-rag.document-path`（绝对路径 `Files.copy`）→ `FileSystemDocumentLoader.loadDocument` → `ragIndexUtil.indexDocument(doc, docIdPrefix, true)`（覆盖旧向量）
+  - `list()`：列出 rag-docs 目录文件名 + 更新时间
+  - `delete(name)`：`clearPrefix("doc:"+name)` + 删除磁盘文件
+- [ ] 新增 `controller/AdminRagController`：`@RequireRole({ROLE_SUPER_ADMIN})`
+  - `POST /api/admin/rag/documents`（multipart `file`）
+  - `GET /api/admin/rag/documents`
+  - `DELETE /api/admin/rag/documents/{name}`
+
+### 前端
+- [ ] 新增 `api/rag.js`：`uploadDoc(file)`（FormData multipart）/ `listDocs()` / `deleteDoc(name)`；Mock 模式给最小内存实现
+- [ ] 新增 `views/admin/RagManageView.vue`：上传区（`el-upload`，accept `.md,.txt`）+ 文档列表（名称/时间/删除按钮）
+- [ ] 路由 `/admin/rag`（`meta.roles: [SUPER_ADMIN]`）+ `MainLayout` 管理后台下拉加「知识库管理」入口（`v-if="store.isSuperAdmin"`）
+
+### 验证
+- [ ] 上传 .md → Redis 出现 `embedding:doc:{名}:*`；重复上传覆盖不重复；删除清向量 + 删文件
+- [ ] 重启后端 → 该文档按 `doc:{名}` 确定性覆盖，不重复
+- [ ] ADMIN/普通用户访问 → 403；AI 提问可检索到新文档内容
+
+---
+
+## 六、其他可选优化（历史遗留）
 
 - [ ] `updateRole` 自我校验精确化：当前为「禁止一切对自己的角色操作」，精确化为「仅禁止降低自己角色」
 - [ ] `register` 返回 `UserInfoVO` 补 `id`（契约完整性）
