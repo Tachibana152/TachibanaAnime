@@ -3,6 +3,7 @@ Description=ProjectSekai-05 Spring Boot Application
 After=network.target mysqld.service redis-server.service
 Wants=mysqld.service redis-server.service
 
+
 [Service]
 Type=simple
 User=projectsekai

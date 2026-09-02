@@ -2,7 +2,7 @@
 
 > 项目：ProjectSekai-05（Tachibana Anime）
 > 记录当前未完成 / 计划中的开发事项，供后续开发与课设报告参考
-> 更新日期：2026-08-29
+> 更新日期：2026-08-31
 
 ---
 
@@ -62,7 +62,29 @@
 
 ---
 
-## 四、其他可选优化（历史遗留）
+## 四、AI 功能（新增，2026-08-31）
+
+> 今日已落地：langchain4j 接入（Boot4 starter / gpt-5.6-luna）、Redis 记忆、Easy RAG、动画自动入向量库。
+> 剩余如下（详见 `DEVLOG-2026-08-31.md`）。
+
+### 后端
+- [ ] **流式聊天接口**（方案已定稿）：`AIService/dto/ChatDTO.java`（sessionId+message，@NotBlank）+ `AIService/service/AIChatService.java`（`chat` / `chatStream`）+ `service/impl/AIChatServiceImpl.java`（委托 `Assistant`）+ `controller/AIChatController.java`
+  - `POST /api/ai/chat` → `R<String>`（同步）
+  - `POST /api/ai/chat/stream`（`text/event-stream`）→ `SseEmitter`，订阅 `TokenStream.onPartialResponse/onCompleteResponse/onError`，`start()` 后台推送
+  - 鉴权：不标 `@NoAuth`，由 `AuthInterceptor` 自动拦截（需登录）
+- [ ] **动画编辑覆盖实测**：`update` 后向量覆盖逻辑已就绪，未跑编辑场景验证
+- [x] **`docs/api.md` 补 AI 接口文档**：/api/ai/chat、/api/ai/chat/stream 契约 + SSE 格式
+
+### 前端
+- [ ] `frontend/src/api/ai.js`：`chat()` 走 axios；`chatStream()` 用 `fetch`（带 `Authorization`）POST + `ReadableStream` 按 `data:` 拆帧回调 `onToken/onDone/onError`
+- [ ] AI 聊天页（打字机效果，登录框 + 会话 ID，待定是否做）
+
+### 知识库
+- [ ] `rag-docs/` 放入真实知识文档（当前为空，`easyRagIngestor` 启动时按 `doc:{文件名}` 确定性覆盖入库）
+
+---
+
+## 五、其他可选优化（历史遗留）
 
 - [ ] `updateRole` 自我校验精确化：当前为「禁止一切对自己的角色操作」，精确化为「仅禁止降低自己角色」
 - [ ] `register` 返回 `UserInfoVO` 补 `id`（契约完整性）
